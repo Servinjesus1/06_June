@@ -155,8 +155,8 @@
   curfit++;
 
   //(3) Fit First Peak: 7LiK ExMoVoigt__________________________________________
-  TF1* FEMV; int aEMV1 = 2;  int cEMV1 = 2;
-  Fits.push_back(new TF1(FExMoVoigt(aEMV1,cEMV1,FEMV))); //Create EMV Fn (6 parameters)
+  TF1* FEMV1; int aEMV1 = 2;  int cEMV1 = 2;
+  Fits.push_back(new TF1(FExMoVoigt(aEMV1,cEMV1,FEMV1))); //Create EMV Fn (6 parameters)
 
   //Exclusion regions
   FitExcl.push_back({r1-50,99});
@@ -166,9 +166,8 @@
   FixSame(Fits[curfit],"Constant",Fits[curfit-1]); //FVoigt
   FixSame(Fits[curfit],"Centroid",Fits[curfit-1]); //FVoigt
   FixSame(Fits[curfit],"Gamma",Fits[curfit-1]); //FVoigt
-
   //Fit
-  result = R2->Fit(Fits[curfit],"SQ0");
+  result = R2->Fit(Fits[curfit],"S0V");
   result->Print();
   Fits[2]->SetParameter(1,Fits[2]->GetParameter(1));
 
@@ -387,6 +386,7 @@
 
   //Write to File
   H1->SetTitle("Total");
+  H->FindObject("stats")->Delete();
   CF->SetTitle("Total Function");
   R2 = (TH1F*)H1->Clone("R2");
   FT->SetTitle("Total Function");
@@ -394,4 +394,6 @@
   Fns->cd(); FT->Write("Tot");
   Cvs->cd(); CF->Write("Tot");
   FO->Close();
+  /*
+*/
 }

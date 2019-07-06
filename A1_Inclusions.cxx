@@ -124,7 +124,7 @@ Double_t FFBg(Double_t* x, Double_t* p){ //Functional Form of Background
 
 Double_t FFGaus0(Double_t* x, Double_t* p){ //Functional Form of Gaussian
   //Exclusion Condition
-  if(ExclRange(x[0])){TF1::RejectPoint();}
+  // if(ExclRange(x[0])){TF1::RejectPoint();}
   //Gaussian
   return TMath::Gaus(x[0],0,p[0],1);
 }
@@ -138,7 +138,7 @@ Double_t FFGaus(Double_t* x, Double_t* p){ //Functional Form of Gaussian
 
 Double_t FFVoigt0(Double_t* x, Double_t* p){ //Functional Form of Voigt
   //Exclusion Condition
-  if(ExclRange(x[0])){TF1::RejectPoint();}
+  // if(ExclRange(x[0])){TF1::RejectPoint();}
   //Voigt
   return TMath::Voigt(x[0],p[0],p[1]);
 }
@@ -153,6 +153,7 @@ Double_t FFVoigt(Double_t* x, Double_t* p){ //Functional Form of Gaussian
 }
 
 Double_t FFCauchy0(Double_t* x, Double_t* p){ //Functional Form of Lorentzian
+  if(p[0]==0){return 0;}
   //Exclusion Condition
   // if(ExclRange(x[0])){TF1::RejectPoint();}
   //Voigt
@@ -160,6 +161,7 @@ Double_t FFCauchy0(Double_t* x, Double_t* p){ //Functional Form of Lorentzian
 }
 
 Double_t FFExMoGaus0(Double_t* x, Double_t* p){ //Constant-Free EMG to be normalized
+  if(p[0]==0){return 0;}
   //First two parameters reserved for Amplitude
   Double_t S = p[0]; //Sigma
   Double_t T = p[1]; //Tau
@@ -172,7 +174,8 @@ Double_t FFExMoGaus0(Double_t* x, Double_t* p){ //Constant-Free EMG to be normal
   if(Z<0){return S/T*TMath::Sqrt(TMath::Pi()/2)*TMath::Exp(Z1)*TMath::Erfc(Z);}
   if(TMath::Exp(Z*Z)==HUGE_VAL){return TMath::Exp(-0.5*X1*X1)/(1+T/S*X1);}//TEMPORARY TEST
   if(0<=Z<=6.71E10){return S/T*TMath::Sqrt(TMath::Pi()/2)*TMath::Exp(-0.5*X1*X1)*Erfcx(Z);}
-  if(Z>6.71E10){return TMath::Exp(-0.5*X1*X1)/(1+T/S*X1);} else{return 0;}
+  if(Z>6.71E10){return TMath::Exp(-0.5*X1*X1)/(1+T/S*X1);}
+  return 0;
 }
 
 Double_t FFNormAmpN(int &a, TF1* & F, Double_t* x, Double_t* p){
@@ -200,49 +203,50 @@ Double_t FFNormAmpNC(int &a, int &c, TF1* & F, Double_t* x, Double_t* p){
   if(ALT!=0){
     for(int i=0;i<F->GetNpar();i++) F->SetParameter(i,p[i+a+c]);
     F->Update(); //For Normalization Integral
+    // ConvEMG->Update();
   }
   double y = x[0]-C; //new centroid
   return A*F->EvalPar(&y,p+a+c);
 }
 
-Double_t FFNormAmpBR(TF1* & F, Double_t* x, Double_t* p){
-  //For convolved (opt normalized) functions to exclude and apply branching ratio amplitude (2 parameters)
-  if(ExclRange(x[0])){TF1::RejectPoint(); return 0;}
-
-  int ALT = 0;
-  for(int i=0; i<F->GetNpar(); i++) if(F->GetParameter(i)!=p[i+2]){ALT++;}
-  Double_t A = p[0]*p[1]; //Constant
-  if(ALT!=0){
-    for(int i=0;i<F->GetNpar();i++) F->SetParameter(i,p[i+2]);
-    F->Update(); //For Normalization Integral
-  }
-  return A*F->EvalPar(x,p+2);
-}
-
-Double_t FFExMoVoigt(TF1* & F, Double_t* x, Double_t* p) {
-  //Create EMV from convolved function. Need to exclude regions, then Normalize
-  //if parameters have changed. Also, Constant becomes two parameters to allow
-  //locking the Escape Ratio and Constant separately.
-  //Exclude
-  if(ExclRange(x[0])){TF1::RejectPoint(kTRUE); return 0;}
-
-  //Normalize (if parameters have changed)
-  int ALT = 0;
-  for(int i=0; i<F->GetNpar(); i++){
-    if(F->GetParameter(i)!=p[i]){ALT++;}
-  }
-  Double_t A = p[0]*p[1]; //Constant
-
-  if(ALT>0){
-    for(int i=0;i<F->GetNpar();i++){//Take passed parameters and set to EMV
-      F->SetParameter(i,p[i]);
-    }
-    F->Update();
-    double NC = F->Integral(r1,r2,1e-4);
-    return A*F->Eval(x[0])/NC;
-  }
-  return A*F->Eval(x[0]);
-}
+// Double_t FFNormAmpBR(TF1* & F, Double_t* x, Double_t* p){
+//   //For convolved (opt normalized) functions to exclude and apply branching ratio amplitude (2 parameters)
+//   if(ExclRange(x[0])){TF1::RejectPoint(); return 0;}
+//
+//   int ALT = 0;
+//   for(int i=0; i<F->GetNpar(); i++) if(F->GetParameter(i)!=p[i+2]){ALT++;}
+//   Double_t A = p[0]*p[1]; //Constant
+//   if(ALT!=0){
+//     for(int i=0;i<F->GetNpar();i++) F->SetParameter(i,p[i+2]);
+//     F->Update(); //For Normalization Integral
+//   }
+//   return A*F->EvalPar(x,p+2);
+// }
+//
+// Double_t FFExMoVoigt(TF1* & F, Double_t* x, Double_t* p) {
+//   //Create EMV from convolved function. Need to exclude regions, then Normalize
+//   //if parameters have changed. Also, Constant becomes two parameters to allow
+//   //locking the Escape Ratio and Constant separately.
+//   //Exclude
+//   if(ExclRange(x[0])){TF1::RejectPoint(kTRUE); return 0;}
+//
+//   //Normalize (if parameters have changed)
+//   int ALT = 0;
+//   for(int i=0; i<F->GetNpar(); i++){
+//     if(F->GetParameter(i)!=p[i]){ALT++;}
+//   }
+//   Double_t A = p[0]*p[1]; //Constant
+//
+//   if(ALT>0){
+//     for(int i=0;i<F->GetNpar();i++){//Take passed parameters and set to EMV
+//       F->SetParameter(i,p[i]);
+//     }
+//     F->Update();
+//     double NC = F->Integral(r1,r2,1e-4);
+//     return A*F->Eval(x[0])/NC;
+//   }
+//   return A*F->Eval(x[0]);
+// }
 
 Double_t FFDSAM0(Double_t* x, Double_t* p){ //Constant-Free DSAM Function
   if(ExclRange(x[0])){TF1::RejectPoint();}
@@ -380,16 +384,19 @@ TF1 FExMoGaus(int &a, int &c, TF1* & FN){
 
 TF1 FExMoVoigt(int &a, int &c, TF1*& FC){
   //Convolve
-  TF1* FEMV = new TF1("EMG",FFExMoGaus0,r1-100,r2+100,2);
-  TF1* FL = new TF1("Lorentzian Function",FFCauchy0,-50,r2+100,1);
-  TF1Convolution ConvEMG(FEMV,FL,r1-100,r2+100,kTRUE);
-  ConvEMG.SetRange(r1-100,r2+100); //Implements AbsComposition?
-  ConvEMG.SetNofPointsFFT(1e5); //FFT Points?
-  FC = new TF1("EMVconv",ConvEMG,r1-100,r2+100,ConvEMG.GetNpar());
+  TF1* FEMV = new TF1("EMG",FFExMoGaus0,-300,r2+500,2);
+  //FEMV->SetNpx(500); FEMV->SetParameters(1,5);
+  TF1* FL = new TF1("Lorentzian Function",FFCauchy0,-300,r2+500,1);
+  //FL->SetNpx(500); FL->SetParameters(1,1);
+  TF1Convolution* ConvEMG = new TF1Convolution(FEMV,FL,true);
+  ConvEMG->SetRange(-300,r2+500); //Implements AbsComposition?
+  ConvEMG->SetNofPointsFFT(1e6); //FFT Points?
+  FC = new TF1("EMVconv",*ConvEMG,-300,r2+500,ConvEMG->GetNpar());
+  FC->SetParameters(1,1,1);
   FC->SetNormalized(kTRUE);
 
   //Normalize & Exclude
-  TF1 F("EMV",[&](Double_t* x, Double_t* p){return FFNormAmpNC(a,c,FC,x,p);},r1,r2,ConvEMG.GetNpar()+a+c); // TEST WITHOUT LAMBDA?
+  TF1 F("EMV",[&](Double_t* x, Double_t* p){return FFNormAmpNC(a,c,FC,x,p);},r1,r2,ConvEMG->GetNpar()+a+c);
   F.SetNpx(2000); F.SetFillColorAlpha(kAzure-9,0.5); F.SetFillStyle(1001);
   F.SetLineColor(kGreen); F.SetLineWidth(1);
   int i=-1;
@@ -408,7 +415,8 @@ TF1 FExMoVoigt(int &a, int &c, TF1*& FC){
 }
 
 TF1 FDSAM(int &n, TF1* & FN){ //DSAM Function
-  FN = new TF1("DSAMfn",FFDSAM0,-100,r2+100,3); //Apply Norm and Amp
+  FN = new TF1("DSAMfn",FFDSAM0,-300,r2+250,3); //Apply Norm and Amp
+  FN->SetNpx(500); FN->SetParameters(1,1);
   FN->SetNormalized(kTRUE);
   TF1 F("DSAM",[&](Double_t* x, Double_t* p){return FFNormAmpN(n,FN,x,p);},r1,r2,3+n);
 	F.SetNpx(2000); F.SetFillColorAlpha(kAzure-9,0.5); F.SetFillStyle(1001);
@@ -427,12 +435,13 @@ TF1 FDSAM(int &n, TF1* & FN){ //DSAM Function
 
 TF1 FDSAMConvolved(int &n, TF1* & FC, TF1* &FX){
   //Convolve
-  TF1* FD = new TF1("DSAM0",FFDSAM0,-100,r2+100,3); //Apply Norm and Amp
+  TF1* FD = new TF1("DSAM0",FFDSAM0,-300,r2+250,3); //Apply Norm and Amp
   FD->SetNpx(500);
-  TF1Convolution ConvDSAM(FD,FX,-100,r2+100,true);
-  ConvDSAM.SetRange(-100,r2+100); //Implements AbsComposition?
+  TF1Convolution ConvDSAM(FD,FX,-300,r2+250,true);
+  ConvDSAM.SetRange(-300,r2+250); //Implements AbsComposition?
   ConvDSAM.SetNofPointsFFT(1e5); //FFT Points?
-  FC = new TF1("DSAMconv",ConvDSAM,-100,r2+100,ConvDSAM.GetNpar());
+  FC = new TF1("DSAMconv",ConvDSAM,-300,r2+250,ConvDSAM.GetNpar());
+  FC->SetParameters(1,1,1,1,1);
   FC->SetNormalized(kTRUE); //Needs a pass to initialize parameters properly
 
   //Normalize & Exclude
@@ -452,7 +461,7 @@ TF1 FDSAMConvolved(int &n, TF1* & FC, TF1* &FX){
 }
 
 TF1 FDSAMG(int &n,TF1* & FN){ //Convolved with Gaussian
-  TF1* FG = new TF1("G0",FFGaus0,-100,r2+100,1);
+  TF1* FG = new TF1("G0",FFGaus0,-300,r2+250,1);
   FG->SetNpx(500);
   TF1 F = FDSAMConvolved(n,FN,FG);
   F.SetNameTitle("DSAMG","DSAMG");
@@ -460,7 +469,7 @@ TF1 FDSAMG(int &n,TF1* & FN){ //Convolved with Gaussian
 }
 
 TF1 FDSAMV(int &n,TF1* & FC){ //Convolved with Voigt
-  TF1* FV = new TF1("Voigt0",FFVoigt0,-100,r2+100,2);
+  TF1* FV = new TF1("Voigt0",FFVoigt0,-300,r2+250,2);
   FV->SetNpx(500);
   TF1 F = FDSAMConvolved(n,FC,FV);
   F.SetNameTitle("DSAMV","DSAMV");
