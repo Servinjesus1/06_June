@@ -693,4 +693,4 @@ void FTInitPars(vector<TF1*> IndFits, int fskip){
       Fits[i]->SetParName(j,pname);
     }
   }
-}
+} 

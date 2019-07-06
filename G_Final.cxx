@@ -87,9 +87,9 @@
   delete FT; FT = new TF1(FTotal(r1,r2));
 
   //Fit
-  result = H1->Fit(FT,"SQ0R");
+  result = H1->Fit(FT,"SQ0EM");
   ParCopy(FT);
-  double p1[11]; FT->GetParameters(p1);
+  double p1[16]; FT->GetParameters(p1);
 
   //Write to File
   H1->SetTitle("(1) Peak 1 + Background + High EMG");
@@ -109,10 +109,10 @@
   //Reset Objects
   parx.clear();
   Fits.clear();
-/*
+
   //(2) Second/Third Peak w/o Background________________________________________
   TF1* FDSAMV1;  int aDSAMV1 = 2;
-  Fits.push_back(new TF1(FDSAMV(aDSAMV1,FDSAMV1))); //Create DSAMV Fn (5 parameters)
+  Fits.push_back(new TF1(FDSAMV(aDSAMV1,FDSAMV1))); //Create DSAMV Fn (7 parameters)
   TF1* FEMV2;  int aEMV2 = 3;  int cEMV2 = 3;
   Fits.push_back(new TF1(FExMoVoigt(aEMV2,cEMV2,FEMV2))); //Create EMV Fn (9 parameters)
   Fits.push_back(new TF1(FGaus(r1,r2))); //Create Gauss Fn (4 parameters)
@@ -141,12 +141,11 @@
   parx[1] = {{"B_Ratio",0},{"Energy",0},{"AOffset",0}};
   parx[2] = {{"Sigma",0}};
   delete FT; FT = new TF1(FTotal(r1,r2));
-  FT->Draw();
 
   //Fit
-  result = R1->Fit(FT,"SQ0R");
+  result = R1->Fit(FT,"SQ0EM");
   ParCopy(FT);
-  double p2[18]; FT->GetParameters(p2);
+  double p2[16]; FT->GetParameters(p2);
   Fits.push_back(new TF1(FDSAM(aDSAMV1,FDSAMV1))); //DSAM before gaus for comparison
   {double p[10]; Fits[0]->GetParameters(p); Fits[3]->SetParameters(p);}
 
@@ -167,48 +166,61 @@
   //Reset Objects
   parx.clear();
   Fits.clear();
-
+  
   //(3) Everything______________________________________________________________
-  Fits.push_back(new TF1(FBg(r1,r2)));  //Create Background Fn (4 parameters)
-  Fits.push_back(new TF1(FVoigt(r1,r2))); //Create Voigt Fn (4 parameters)
-  TF1* FEMV; int aEMV1 = 2;  int cEMV1 = 2;
-  Fits.push_back(new TF1(FExMoVoigt(aEMV1,cEMV1,FEMV))); //Create EMV Fn (6 parameters)
-  TF1* FEMG0; int aEMG0 = 1; int cEMG0 = 1;
-  Fits.push_back(new TF1(FExMoGaus(aEMG0,cEMG0,FEMG0))); //Create EMG Fn (4 parameters)
-  TF1* FDSAMV1;  int aDSAMV1 = 2;
-  Fits.push_back(new TF1(FDSAMV(aDSAMV1,FDSAMV1))); //Create DSAMV Fn (5 parameters)
-  TF1* FEMV2;  int aEMV2 = 3;  int cEMV2 = 3;
-  Fits.push_back(new TF1(FExMoVoigt(aEMV2,cEMV2,FEMV2))); //Create EMV Fn (9 parameters)
-  Fits.push_back(new TF1(FGaus(r1,r2))); //Create Gauss Fn (4 parameters)
+  Fits.push_back(new TF1(FBg(r1,r2)));                    //(0) BKG    (4 parameters)
+  Fits.push_back(new TF1(FVoigt(r1,r2)));                 //(1) Voigt  (4 parameters)
+  delete FEMV; aEMV1 = 2; cEMV1 = 2;
+  Fits.push_back(new TF1(FExMoVoigt(aEMV1,cEMV1,FEMV)));  //(2) EMV1   (7 parameters)
+  delete FEMG0; aEMG0 = 1; cEMG0 = 1;
+  Fits.push_back(new TF1(FExMoGaus(aEMG0,cEMG0,FEMG0)));  //(3) EMG0   (4 parameters)
+  delete FDSAMV1; aDSAMV1 = 2;
+  Fits.push_back(new TF1(FDSAMV(aDSAMV1,FDSAMV1)));       //(4) DSAMV  (7 parameters)
+  delete FEMV2; aEMV2 = 3; cEMV2 = 3;
+  Fits.push_back(new TF1(FExMoVoigt(aEMV2,cEMV2,FEMV2))); //(5) EMV2   (9 parameters)
+  Fits.push_back(new TF1(FGaus(r1,r2)));                  //(6) Gaus   (4 parameters)
   TF1* FDSAMG1; int aDSAMG1 = 3;
-  Fits.push_back(new TF1(FDSAMG(aDSAMG1,FDSAMG1))); //Create DSAMG Fn (6 parameters)
+  Fits.push_back(new TF1(FDSAMG(aDSAMG1,FDSAMG1)));       //(7) DSAMG  (7 parameters)
 
   //Exclusion regions
   FitExcl.push_back({177,500});
 
   //Previous Parameters
   vector<double> pall;
-  pall.insert(pall.end(),&p1[0],&p1[13]);
-  pall.insert(pall.end(),&p2[0],&p2[18]);
-  {
+  pall.insert(pall.end(),&p1[0],&p1[15]);
+  pall.insert(pall.end(),&p2[0],&p2[15]);
+
     int j=0;
-    for(int k=0;k<6;k++){
+    for(unsigned k=0;k<Fits.size();k++){
       for(int i=0;i<Fits[k]->GetNpar();i++){
         Fits[k]->SetParameter(i,pall[j]);
         j++;
       }
     }
-    for(int i=0; i<Fits.size(); i++){
+    for(unsigned i=0; i<Fits.size(); i++){
+      const char* fname = IndFits[i]->GetTitle();
+      Fits[i]->SetTitle(fname);
       for(int j=0; j<IndFits[i]->GetNpar(); j++){
         double a,b; IndFits[i]->GetParLimits(j,a,b);
         Fits[i]->SetParLimits(j,a,b);
+        const char* pname=IndFits[i]->GetParName(j);
+        Fits[i]->SetParName(j,pname);
       }
     }
-  }
 
   //Parameter Guesses
+  FixName(Fits[4],"Offset",  54.75); //Offset = Auger
+  FixName(Fits[7],"Offset",  0); //Offset = 0
 
   //FT
+  parx[0] = {};
+  parx[1] = {};
+  parx[2] = {{"Constant",1},{"Centroid",1},{"Gamma",1}};
+  parx[3] = {};
+  parx[4] = {{"Constant",1},{"Sigma",1},{"Gamma",1}};
+  parx[5] = {{"Sigma",2},{"Tau",2},{"Gamma",1}};
+  parx[6] = {{"Constant",1}};
+  parx[7] = {{"Constant",1},{"B_Ratio",4},{"R_LKCapt",6},{"Decay",4},{"Energy",4},{"Sigma",1}};
   delete FT; FT = new TF1(FTotal(r1,r2));
   ParCopy(FT);
 
@@ -222,11 +234,10 @@
   FitExcl = FitExcl2;
   CanvG(CF,FT,H1,R1,"3_All_Prelim_900");
   FitExcl = FitExcl2;
-  /*
 
   //Fit
-  result = H1->Fit(FT,"S0REM");
-  ParCopy(FT);
+  result = H1->Fit(FT,"SQ0EM");
+  ParCopy(FT); ParCheck(FT);
 
   //Write to File
   H1->SetTitle("(3) Complete Fit");
@@ -243,5 +254,5 @@
   Cvs->cd(); CF->Write("C3");
 
   FO->Close();
-  */
+
 }

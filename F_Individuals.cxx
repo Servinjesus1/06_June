@@ -102,7 +102,7 @@
 //_______________________________FITTING________________________________________
 //______________________________________________________________________________
   //(1) Background______________________________________________________________
-  Fits.push_back(new TF1(FBg(r1,r2)));  //Create Background Fn (4 parameters)
+  Fits.push_back(new TF1(FBg(r1,r2)));  //BKG (Const1 Slope1 Const2 Slope2)
   int curfit=Fits.size()-1;
 
   //Exclusion regions
@@ -111,7 +111,7 @@
   FitExcl.push_back({174,350}); //BG Excl Regions
 
   //Fit
-  result = H1->Fit(Fits[curfit],"SQ0");
+  result = H1->Fit(Fits[curfit],"SQ0M");
   result->Print();
 
   //Write to File
@@ -128,7 +128,7 @@
 
   //(2) Fit First Peak: 7LiK Voigt______________________________________________
   r2=200;
-  Fits.push_back(new TF1(FVoigt(r1,r2))); //Create Voigt Fn (4 parameters)
+  Fits.push_back(new TF1(FVoigt(r1,r2))); //Voigt (Constant Centroid Sigma Gamma)
 
   //Exclusion regions
   FitExcl.push_back({r1,peaksX[0]-1});
@@ -136,10 +136,11 @@
 
   //Parameter Guesses
   Fits[curfit]->SetParameter("Centroid",peaksX[0]);
+
   Fits[curfit]->SetParameter("Constant",peaksY[0]);
 
   //Fit
-  result = R2->Fit(Fits[curfit],"SQ0");
+  result = R2->Fit(Fits[curfit],"SQ0M");
   result->Print();
 
   //Write to File
@@ -156,7 +157,7 @@
 
   //(3) Fit First Peak: 7LiK ExMoVoigt__________________________________________
   TF1* FEMV1; int aEMV1 = 2;  int cEMV1 = 2;
-  Fits.push_back(new TF1(FExMoVoigt(aEMV1,cEMV1,FEMV1))); //Create EMV Fn (6 parameters)
+  Fits.push_back(new TF1(FExMoVoigt(aEMV1,cEMV1,FEMV1))); //EMV1 (Const R_Escape Centroid Offset Sigma Tau)
 
   //Exclusion regions
   FitExcl.push_back({r1-50,99});
@@ -164,10 +165,13 @@
 
   //Parameter Guesses
   FixSame(Fits[curfit],"Constant",Fits[curfit-1]); //FVoigt
+
   FixSame(Fits[curfit],"Centroid",Fits[curfit-1]); //FVoigt
+
   FixSame(Fits[curfit],"Gamma",Fits[curfit-1]); //FVoigt
+
   //Fit
-  result = R2->Fit(Fits[curfit],"S0V");
+  result = R2->Fit(Fits[curfit],"SQ0M");
   result->Print();
   Fits[2]->SetParameter(1,Fits[2]->GetParameter(1));
 
@@ -190,7 +194,7 @@
 
   //(4) Fit Extra Peak: Gamma EMG_______________________________________________
   TF1* FEMG0; int aEMG0 = 1; int cEMG0 = 1;
-  Fits.push_back(new TF1(FExMoGaus(aEMG0,cEMG0,FEMG0))); //Create EMG Fn (4 parameters)
+  Fits.push_back(new TF1(FExMoGaus(aEMG0,cEMG0,FEMG0))); //EMG0 (Constant Centroid Offset Sigma Tau)
 
   //Exclusion regions
   FitExcl.push_back({r1,118});
@@ -198,12 +202,14 @@
 
   //Parameter Guesses
   Fits[curfit]->SetParameter("Centroid",125); //Centroid Guess
+
   Fits[curfit]->SetParameter("Sigma",1.2); //Sigma Guess
+
   Fits[curfit]->SetParameter("Tau",-5); //Tau Guess
   Fits[curfit]->SetParLimits(Fits[curfit]->GetParNumber("Tau"),-10,0); //Tau Is Negative
 
   //Fit
-  result = R2->Fit(Fits[curfit],"SQ0RM");
+  result = R2->Fit(Fits[curfit],"SQ0M");
   result->Print();
 
   //Write to File
@@ -224,8 +230,8 @@
   CF->SaveAs("Output/F_Individuals/TS8.pdf");
 
   //(5) Fit Second Peak: 7Li*K DSAMV____________________________________________
-  TF1* FDSAMV1;  int aDSAMV1 = 2;
-  Fits.push_back(new TF1(FDSAMV(aDSAMV1,FDSAMV1))); //Create DSAMV Fn (5 parameters)
+  TF1* DSAMV;  int aDSAMV = 2;
+  Fits.push_back(new TF1(FDSAMV(aDSAMV,DSAMV))); //DSAMV (Constant B_Ratio Decay Energy AOffset Sigma Gamma)
 
   //Exclusion regions
   FitExcl.push_back({r1,peaksX[1]-5});
@@ -233,15 +239,21 @@
 
   //Parameter Guesses
   FixSame(Fits[curfit],"Constant",Fits[curfit-3]); //FVoigt
+
   Fits[curfit]->SetParameter("B_Ratio",0.1048);
+
   Fits[curfit]->SetParameter("Decay",1.6);
+
   Fits[curfit]->SetParameter("Energy",29);
-  FixSame(Fits[curfit],"Sigma",Fits[curfit-3]); //FVoigt
-  FixSame(Fits[curfit],"Gamma",Fits[curfit-3]); //FVoigt
+
   FixName(Fits[curfit],"AOffset",54.75); //Offset = Auger
 
+  FixSame(Fits[curfit],"Sigma",Fits[curfit-3]); //FVoigt
+
+  FixSame(Fits[curfit],"Gamma",Fits[curfit-3]); //FVoigt
+
   //Fit
-  result = R2->Fit(Fits[curfit],"SQ0");
+  result = R2->Fit(Fits[curfit],"SQ0M");
   result->Print();
 
   // //Forced Solution
@@ -268,7 +280,7 @@
 
   //(6) Fit Second Peak: 7Li*K ExMoVoigt________________________________________
   TF1* FEMV2;  int aEMV2 = 3;  int cEMV2 = 3;
-  Fits.push_back(new TF1(FExMoVoigt(aEMV2,cEMV2,FEMV2))); //Create EMV Fn (7 parameters)
+  Fits.push_back(new TF1(FExMoVoigt(aEMV2,cEMV2,FEMV2))); //EMV2 (Constant R_Escape B_Ratio Energy AOffset Offset Sigma Tau Gamma)
 
   //Exclusion regions
   FitExcl.push_back({r1-50,74});
@@ -276,22 +288,30 @@
 
   //Parameter Guesses
   FixSame(Fits[curfit],"Constant",Fits[curfit-4]); //FVoigt
-  Fits[curfit]->SetParName(1,"B_Ratio");
-  FixSame(Fits[curfit],"B_Ratio",Fits[curfit-1]); //DSAMV
+
   SetSame(Fits[curfit],"R_Escape",Fits[curfit-3]); //EMV
   ParLimit(Fits[curfit],1,0.1);
+
+  Fits[curfit]->SetParName(2,"B_Ratio");
+  FixSame(Fits[curfit],"B_Ratio",Fits[curfit-1]); //DSAMV
+
   Fits[curfit]->SetParName(3,"Energy");
   FixSame(Fits[curfit],"Energy",Fits[curfit-1]); //DSAMV
+
   Fits[curfit]->SetParName(4,"AOffset");
   FixSame(Fits[curfit],"AOffset",Fits[curfit-1]); //DSAMV
+
   SetSame(Fits[curfit],"Offset",Fits[curfit-3]); //EMV
-  ParLimit(Fits[curfit],3,0.2);
+  ParLimit(Fits[curfit],5,0.2);
+
   FixSame(Fits[curfit],"Sigma",Fits[curfit-3]); //EMV
+
   FixSame(Fits[curfit],"Tau",Fits[curfit-3]); //EMV
+
   FixSame(Fits[curfit],"Gamma",Fits[curfit-4]); //FVoigt
 
   // Fit
-  result = R2->Fit(Fits[curfit],"SQ0RM");
+  result = R2->Fit(Fits[curfit],"SQ0M");
   result->Print();
 
   //Write to File
@@ -312,15 +332,17 @@
   CF->SaveAs("Output/F_Individuals/TS5.pdf");
 
   //(7) Fit Third Peak: L-G Gaus________________________________________________
-  Fits.push_back(new TF1(FGaus(r1,r2))); //Create Gauss Fn (3 parameters)
+  Fits.push_back(new TF1(FGaus(r1,r2))); //Create Gauss Fn (Constant R_LKCapt Centroid Sigma)
 
   //Parameter Guesses
   FixSame(Fits[curfit],"Constant",Fits[curfit-5]); //FVoigt
+
   Fits[curfit]->SetParameter("Centroid",peaksX[2]);
+
   FixSame(Fits[curfit],"Sigma",Fits[curfit-5]); //FVoigt
 
   //Fit
-  result = R2->Fit(Fits[curfit],"SQ0RM");
+  result = R2->Fit(Fits[curfit],"SQ0M");
   result->Print();
 
   //Write to File
@@ -341,8 +363,8 @@
   CF->SaveAs("Output/F_Individuals/TS6.pdf");
 
   //(8) Fit Fourth Peak: L-X DSAMG______________________________________________
-  TF1* FDSAMG1; int aDSAMG1 = 3;
-  Fits.push_back(new TF1(FDSAMG(aDSAMG1,FDSAMG1))); //Create DSAMG Fn (6 parameters)
+  TF1* DSAMG; int aDSAMG = 3;
+  Fits.push_back(new TF1(FDSAMG(aDSAMG,DSAMG))); //DSAMG (Constant B_Ratio R_LKCapt Decay Energy AOffset Sigma)
 
   //Exclusion regions
   FitExcl.push_back({r1,18});
@@ -350,17 +372,22 @@
 
   //Parameter Guesses
   FixSame(Fits[curfit],"Constant",Fits[curfit-6]); //FVoigt
-  Fits[curfit]->SetParName(1,"B_Ratio");
-  FixSame(Fits[curfit],"B_ratio",Fits[curfit-3]); //DSAMV
+
+  FixSame(Fits[curfit],"B_Ratio",Fits[curfit-3]); //DSAMV
+
   Fits[curfit]->SetParName(2,"R_LKCapt");
   FixSame(Fits[curfit],"R_LKCapt",Fits[curfit-1]); //Gaus
+
   FixSame(Fits[curfit],"Decay",Fits[curfit-3]); //DSAMV
+
   FixSame(Fits[curfit],"Energy",Fits[curfit-3]); //DSAMV
+
   FixName(Fits[curfit],"AOffset",0); //Offset = 0
+
   FixSame(Fits[curfit],"Sigma",Fits[curfit-6]); //FVoigt
 
   //Fit
-  result = R2->Fit(Fits[curfit],"SQ0RM");
+  result = R2->Fit(Fits[curfit],"SQ0M");
   result->Print();
 
   //Write to File
@@ -386,7 +413,7 @@
 
   //Write to File
   H1->SetTitle("Total");
-  H->FindObject("stats")->Delete();
+  H1->SetStats(0);
   CF->SetTitle("Total Function");
   R2 = (TH1F*)H1->Clone("R2");
   FT->SetTitle("Total Function");
