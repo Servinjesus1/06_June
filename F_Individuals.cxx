@@ -158,17 +158,18 @@
   //(3) Fit First Peak: 7LiK ExMoVoigt__________________________________________
   TF1* FEMV1; int aEMV1 = 2;  int cEMV1 = 2;
   Fits.push_back(new TF1(FExMoVoigt(aEMV1,cEMV1,FEMV1))); //EMV1 (Const R_Escape Centroid Offset Sigma Tau)
+  Fits[curfit]->SetName("EMV1");
 
   //Exclusion regions
   FitExcl.push_back({r1-50,99});
   FitExcl.push_back({113,r2+300});
 
   //Parameter Guesses
-  FixSame(Fits[curfit],"Constant",Fits[curfit-1]); //FVoigt
+  FixSame(Fits[curfit],"Constant",Fits[FitNum("Voigt")]);
 
-  FixSame(Fits[curfit],"Centroid",Fits[curfit-1]); //FVoigt
+  FixSame(Fits[curfit],"Centroid",Fits[FitNum("Voigt")]);
 
-  FixSame(Fits[curfit],"Gamma",Fits[curfit-1]); //FVoigt
+  FixSame(Fits[curfit],"Gamma",Fits[FitNum("Voigt")]);
 
   //Fit
   result = R2->Fit(Fits[curfit],"SQ0M");
@@ -213,23 +214,97 @@
   result->Print();
 
   //Write to File
-  R2->SetTitle("(8) EMG");
-  CF->SetTitle("(8) EMG");
-  Fits[curfit]->SetTitle("(8) EMG");
+  R2->SetTitle("(4) EMG");
+  CF->SetTitle("(4) EMG");
+  Fits[curfit]->SetTitle("(4) EMG");
   R1 = (TH1F*)R2->Clone("R1");
-  CanvF(CF,Fits[curfit],R1,R2,"8_EMG");
-  Rts->cd(); result->Write("R8");
-  Hgs->cd(); R2->Write("R8_EMG");
+  CanvF(CF,Fits[curfit],R1,R2,"4_EMG");
+  Rts->cd(); result->Write("48");
+  Hgs->cd(); R2->Write("R4_EMG");
   Fns->cd(); Fits[curfit]->Write("F4");
-  Cvs->cd(); CF->Write("C8");
+  Cvs->cd(); CF->Write("C4");
   curfit++;
 
   fpad = CF->GetPad(1);
   FT = new TF1(FTotal(r1,300));
   fpad->cd(); FT->Draw("Same");
-  CF->SaveAs("Output/F_Individuals/TS8.pdf");
+  CF->SaveAs("Output/F_Individuals/TS4.pdf");
 
-  //(5) Fit Second Peak: 7Li*K DSAMV____________________________________________
+  //(5) Fit Third Peak: L-G Gaus________________________________________________
+  Fits.push_back(new TF1(FGaus(r1,r2))); //Create Gauss Fn (Constant R_LKCapt Centroid Sigma)
+
+  //Exclusion regions
+  FitExcl.push_back({r1,50});
+  FitExcl.push_back({60,r2});
+
+  //Parameter Guesses
+  FixSame(Fits[curfit],"Constant",Fits[FitNum("Voigt")]);
+
+  Fits[curfit]->SetParameter("Centroid",peaksX[2]);
+
+  FixSame(Fits[curfit],"Sigma",Fits[FitNum("Voigt")]);
+
+  //Fit
+  result = R2->Fit(Fits[curfit],"SQ0M");
+  result->Print();
+
+  //Write to File
+  R2->SetTitle("(5) Gaus");
+  CF->SetTitle("(5) Gaus");
+  Fits[curfit]->SetTitle("(5) Gaus");
+  R1 = (TH1F*)R2->Clone("R1");
+  CanvF(CF,Fits[curfit],R1,R2,"5_Gaus");
+  Rts->cd(); result->Write("R5");
+  Hgs->cd(); R2->Write("R5_Gaus");
+  Fns->cd(); Fits[curfit]->Write("F5");
+  Cvs->cd(); CF->Write("C5");
+  curfit++;
+
+  fpad = CF->GetPad(1);
+  FT = new TF1(FTotal(r1,300));
+  fpad->cd(); FT->Draw("Same");
+  CF->SaveAs("Output/F_Individuals/TS5.pdf");
+
+  //(6) Fit Fourth Peak: L-X DSAMG______________________________________________
+  TF1* DSAMG; int aDSAMG = 3;
+  Fits.push_back(new TF1(FDSAMG(aDSAMG,DSAMG))); //DSAMG (Constant B_Ratio R_LKCapt Decay Energy AOffset Sigma)
+
+  //Exclusion regions
+  FitExcl.push_back({r1,15});
+  FitExcl.push_back({38,r2});
+
+  //Parameter Guesses
+  FixSame(Fits[curfit],"Constant",Fits[FitNum("Voigt")]);
+
+  Fits[curfit]->SetParName(2,"R_LKCapt");
+  FixSame(Fits[curfit],"R_LKCapt",Fits[FitNum("LK_Gaussian")]);
+
+  FixName(Fits[curfit],"AOffset",0); //Offset = 0
+
+  FixSame(Fits[curfit],"Sigma",Fits[FitNum("Voigt")]);
+
+  //Fit
+  result = R2->Fit(Fits[curfit],"SQ0M");
+  result->Print();
+
+  //Write to File
+  R2->SetTitle("(6) DSAMG");
+  CF->SetTitle("(6) DSAMG");
+  Fits[curfit]->SetTitle("(6) DSAMG");
+  R1 = (TH1F*)R2->Clone("R1");
+  CanvF(CF,Fits[curfit],R1,R2,"6_DSAMG");
+  Rts->cd(); result->Write("R6");
+  Hgs->cd(); R2->Write("R6_DSAMG");
+  Fns->cd(); Fits[curfit]->Write("F6");
+  Cvs->cd(); CF->Write("C6");
+  curfit++;
+
+  fpad = CF->GetPad(1);
+  FT = new TF1(FTotal(r1,300));
+  fpad->cd(); FT->Draw("Same");
+  CF->SaveAs("Output/F_Individuals/TS6.pdf");
+
+  //(7) Fit Second Peak: 7Li*K DSAMV____________________________________________
   TF1* DSAMV;  int aDSAMV = 2;
   Fits.push_back(new TF1(FDSAMV(aDSAMV,DSAMV))); //DSAMV (Constant B_Ratio Decay Energy AOffset Sigma Gamma)
 
@@ -238,19 +313,19 @@
   FitExcl.push_back({99,r2});
 
   //Parameter Guesses
-  FixSame(Fits[curfit],"Constant",Fits[curfit-3]); //FVoigt
+  FixSame(Fits[curfit],"Constant",Fits[FitNum("Voigt")]);
 
-  Fits[curfit]->SetParameter("B_Ratio",0.1048);
+  FixSame(Fits[curfit],"B_Ratio",Fits[FitNum("DSAMG")]);
 
-  Fits[curfit]->SetParameter("Decay",1.6);
+  FixSame(Fits[curfit],"Decay",Fits[FitNum("DSAMG")]);
 
-  Fits[curfit]->SetParameter("Energy",29);
+  FixSame(Fits[curfit],"Energy",Fits[FitNum("DSAMG")]);
 
   FixName(Fits[curfit],"AOffset",54.75); //Offset = Auger
 
-  FixSame(Fits[curfit],"Sigma",Fits[curfit-3]); //FVoigt
+  FixSame(Fits[curfit],"Sigma",Fits[FitNum("Voigt")]);
 
-  FixSame(Fits[curfit],"Gamma",Fits[curfit-3]); //FVoigt
+  FixSame(Fits[curfit],"Gamma",Fits[FitNum("Voigt")]);
 
   //Fit
   result = R2->Fit(Fits[curfit],"SQ0M");
@@ -262,143 +337,14 @@
   // Fits[curfit]->SetParameter("Energy",29);
 
   //Write to File
-  R2->SetTitle("(4) DSAMV");
-  CF->SetTitle("(4) DSAMV");
-  Fits[curfit]->SetTitle("(4) DSAMV");
+  R2->SetTitle("(7) DSAMV");
+  CF->SetTitle("(7) DSAMV");
+  Fits[curfit]->SetTitle("(7) DSAMV");
   R1 = (TH1F*)R2->Clone("R1");
-  CanvF(CF,Fits[curfit],R1,R2,"4_DSAMV");
-  Rts->cd(); result->Write("R4");
-  Hgs->cd(); R2->Write("R4_DSAMV");
-  Fns->cd(); Fits[curfit]->Write("F5");
-  Cvs->cd(); CF->Write("C4");
-  curfit++;
-
-  fpad = CF->GetPad(1);
-  FT = new TF1(FTotal(r1,300));
-  fpad->cd(); FT->Draw("Same");
-  CF->SaveAs("Output/F_Individuals/TS4.pdf");
-
-  //(6) Fit Second Peak: 7Li*K ExMoVoigt________________________________________
-  TF1* FEMV2;  int aEMV2 = 3;  int cEMV2 = 3;
-  Fits.push_back(new TF1(FExMoVoigt(aEMV2,cEMV2,FEMV2))); //EMV2 (Constant R_Escape B_Ratio Energy AOffset Offset Sigma Tau Gamma)
-
-  //Exclusion regions
-  FitExcl.push_back({r1-50,74});
-  FitExcl.push_back({90,r2+50});
-
-  //Parameter Guesses
-  FixSame(Fits[curfit],"Constant",Fits[curfit-4]); //FVoigt
-
-  SetSame(Fits[curfit],"R_Escape",Fits[curfit-3]); //EMV
-  ParLimit(Fits[curfit],1,0.1);
-
-  Fits[curfit]->SetParName(2,"B_Ratio");
-  FixSame(Fits[curfit],"B_Ratio",Fits[curfit-1]); //DSAMV
-
-  Fits[curfit]->SetParName(3,"Energy");
-  FixSame(Fits[curfit],"Energy",Fits[curfit-1]); //DSAMV
-
-  Fits[curfit]->SetParName(4,"AOffset");
-  FixSame(Fits[curfit],"AOffset",Fits[curfit-1]); //DSAMV
-
-  SetSame(Fits[curfit],"Offset",Fits[curfit-3]); //EMV
-  ParLimit(Fits[curfit],5,0.2);
-
-  FixSame(Fits[curfit],"Sigma",Fits[curfit-3]); //EMV
-
-  FixSame(Fits[curfit],"Tau",Fits[curfit-3]); //EMV
-
-  FixSame(Fits[curfit],"Gamma",Fits[curfit-4]); //FVoigt
-
-  // Fit
-  result = R2->Fit(Fits[curfit],"SQ0M");
-  result->Print();
-
-  //Write to File
-  R2->SetTitle("(5) ExMoVoigt");
-  CF->SetTitle("(5) ExMoVoigt");
-  Fits[curfit]->SetTitle("(5) ExMoVoigt");
-  R1 = (TH1F*)R2->Clone("R1");
-  CanvF(CF,Fits[curfit],R1,R2,"5_EMV");
-  Rts->cd(); result->Write("R5");
-  Hgs->cd(); R2->Write("R5_EMV");
-  Fns->cd(); Fits[curfit]->Write("F6");
-  Cvs->cd(); CF->Write("C5");
-  curfit++;
-
-  fpad = CF->GetPad(1);
-  FT = new TF1(FTotal(r1,300));
-  fpad->cd(); FT->Draw("Same");
-  CF->SaveAs("Output/F_Individuals/TS5.pdf");
-
-  //(7) Fit Third Peak: L-G Gaus________________________________________________
-  Fits.push_back(new TF1(FGaus(r1,r2))); //Create Gauss Fn (Constant R_LKCapt Centroid Sigma)
-
-  //Parameter Guesses
-  FixSame(Fits[curfit],"Constant",Fits[curfit-5]); //FVoigt
-
-  Fits[curfit]->SetParameter("Centroid",peaksX[2]);
-
-  FixSame(Fits[curfit],"Sigma",Fits[curfit-5]); //FVoigt
-
-  //Fit
-  result = R2->Fit(Fits[curfit],"SQ0M");
-  result->Print();
-
-  //Write to File
-  R2->SetTitle("(6) Gaus");
-  CF->SetTitle("(6) Gaus");
-  Fits[curfit]->SetTitle("(6) Gaus");
-  R1 = (TH1F*)R2->Clone("R1");
-  CanvF(CF,Fits[curfit],R1,R2,"6_Gaus");
-  Rts->cd(); result->Write("R6");
-  Hgs->cd(); R2->Write("R6_Gaus");
-  Fns->cd(); Fits[curfit]->Write("F7");
-  Cvs->cd(); CF->Write("C6");
-  curfit++;
-
-  fpad = CF->GetPad(1);
-  FT = new TF1(FTotal(r1,300));
-  fpad->cd(); FT->Draw("Same");
-  CF->SaveAs("Output/F_Individuals/TS6.pdf");
-
-  //(8) Fit Fourth Peak: L-X DSAMG______________________________________________
-  TF1* DSAMG; int aDSAMG = 3;
-  Fits.push_back(new TF1(FDSAMG(aDSAMG,DSAMG))); //DSAMG (Constant B_Ratio R_LKCapt Decay Energy AOffset Sigma)
-
-  //Exclusion regions
-  FitExcl.push_back({r1,18});
-  FitExcl.push_back({32,r2});
-
-  //Parameter Guesses
-  FixSame(Fits[curfit],"Constant",Fits[curfit-6]); //FVoigt
-
-  FixSame(Fits[curfit],"B_Ratio",Fits[curfit-3]); //DSAMV
-
-  Fits[curfit]->SetParName(2,"R_LKCapt");
-  FixSame(Fits[curfit],"R_LKCapt",Fits[curfit-1]); //Gaus
-
-  FixSame(Fits[curfit],"Decay",Fits[curfit-3]); //DSAMV
-
-  FixSame(Fits[curfit],"Energy",Fits[curfit-3]); //DSAMV
-
-  FixName(Fits[curfit],"AOffset",0); //Offset = 0
-
-  FixSame(Fits[curfit],"Sigma",Fits[curfit-6]); //FVoigt
-
-  //Fit
-  result = R2->Fit(Fits[curfit],"SQ0M");
-  result->Print();
-
-  //Write to File
-  R2->SetTitle("(7) DSAMG");
-  CF->SetTitle("(7) DSAMG");
-  Fits[curfit]->SetTitle("(7) DSAMG");
-  R1 = (TH1F*)R2->Clone("R1");
-  CanvF(CF,Fits[curfit],R1,R2,"7_DSAMG");
+  CanvF(CF,Fits[curfit],R1,R2,"7_DSAMV");
   Rts->cd(); result->Write("R7");
-  Hgs->cd(); R2->Write("R7_DSAMG");
-  Fns->cd(); Fits[curfit]->Write("F8");
+  Hgs->cd(); R2->Write("R7_DSAMV");
+  Fns->cd(); Fits[curfit]->Write("F7");
   Cvs->cd(); CF->Write("C7");
   curfit++;
 
@@ -406,6 +352,60 @@
   FT = new TF1(FTotal(r1,300));
   fpad->cd(); FT->Draw("Same");
   CF->SaveAs("Output/F_Individuals/TS7.pdf");
+
+  //(8) Fit Second Peak: 7Li*K ExMoVoigt________________________________________
+  TF1* FEMV2;  int aEMV2 = 3;  int cEMV2 = 3;
+  Fits.push_back(new TF1(FExMoVoigt(aEMV2,cEMV2,FEMV2))); //EMV2 (Constant R_Escape B_Ratio Energy AOffset Offset Sigma Tau Gamma)
+  Fits[curfit]->SetName("EMV2");
+
+  //Exclusion regions
+  FitExcl.push_back({r1-50,74});
+  FitExcl.push_back({90,r2+50});
+
+  //Parameter Guesses
+  FixSame(Fits[curfit],"Constant",Fits[FitNum("Voigt")]);
+
+  SetSame(Fits[curfit],"R_Escape",Fits[FitNum("EMV1")]);
+  ParLimit(Fits[curfit],1,0.1);
+
+  Fits[curfit]->SetParName(2,"B_Ratio");
+  FixSame(Fits[curfit],"B_Ratio",Fits[FitNum("DSAMV")]);
+
+  Fits[curfit]->SetParName(3,"Energy");
+  FixSame(Fits[curfit],"Energy",Fits[FitNum("DSAMV")]);
+
+  Fits[curfit]->SetParName(4,"AOffset");
+  FixSame(Fits[curfit],"AOffset",Fits[FitNum("DSAMV")]);
+
+  SetSame(Fits[curfit],"Offset",Fits[FitNum("EMV1")]);
+  ParLimit(Fits[curfit],5,0.2);
+
+  FixSame(Fits[curfit],"Sigma",Fits[FitNum("EMV1")]);
+
+  FixSame(Fits[curfit],"Tau",Fits[FitNum("EMV1")]);
+
+  FixSame(Fits[curfit],"Gamma",Fits[FitNum("Voigt")]);
+
+  // Fit
+  result = R2->Fit(Fits[curfit],"SQ0M");
+  result->Print();
+
+  //Write to File
+  R2->SetTitle("(8) ExMoVoigt");
+  CF->SetTitle("(8) ExMoVoigt");
+  Fits[curfit]->SetTitle("(8) ExMoVoigt");
+  R1 = (TH1F*)R2->Clone("R1");
+  CanvF(CF,Fits[curfit],R1,R2,"8_EMV");
+  Rts->cd(); result->Write("R8");
+  Hgs->cd(); R2->Write("R8_EMV");
+  Fns->cd(); Fits[curfit]->Write("F8");
+  Cvs->cd(); CF->Write("C8");
+  curfit++;
+
+  fpad = CF->GetPad(1);
+  FT = new TF1(FTotal(r1,300));
+  fpad->cd(); FT->Draw("Same");
+  CF->SaveAs("Output/F_Individuals/TS8.pdf");
 
   //FT__________________________________________________________________________
   //Recreate FT

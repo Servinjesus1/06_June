@@ -25,24 +25,27 @@
   H2->SetLineColor(kGreen);
 
   //Functions
-  TF1* F1 = new TF1(FDSAM(r1,r2));
-  TF1* F2 = new TF1(FVoigt(r1,r2));
-  TF1* F3 = new TF1(FGaus(r1,r2));
-  TF1* F4 = new TF1(FDSAMV(r1,r2));
-  TF1* F5 = new TF1(FDSAMG(r1,r2));
+  TF1* DSAM; int aDSAM = 1;
+  TF1* fDSAM = new TF1(FDSAM(aDSAM,DSAM)); // C D E AO
+  TF1* fVoigt = new TF1(FVoigt(r1,r2));
+  TF1* fGaus = new TF1(FGaus(r1,r2));
+  TF1* DSAMV; int aDSAMV = 1;
+  TF1* fDSAMV = new TF1(FDSAMV(aDSAMV,DSAMV));
+  TF1* DSAMG; int aDSAMG = 1;
+  TF1* fDSAMG = new TF1(FDSAMG(aDSAMG,DSAMG));
 
   //Stack
   THStack* hs = new THStack("hs","Ideal Spectrum");
 
   //Ideal Spectrum______________________________________________________________
-  F1->SetParameters(1e6*0.1,1.908,27.04,56.8263);
+  fDSAM->SetParameters(1e6*0.1,1.908,28,56.8263);
   for(int i=0;i<H1->GetXaxis()->GetNbins();i++){//FDSAM: K-X
-    H1->SetBinContent(i,H1->GetBinContent(i)+F1->Eval(H1->GetBinLowEdge(i)));
+    H1->SetBinContent(i,H1->GetBinContent(i)+fDSAM->Eval(H1->GetBinLowEdge(i)));
   }
 
-  F1->SetParameters(1e6*0.1*0.0406,1.908,27.04,0);
+  fDSAM->SetParameters(1e6*0.1*0.0406,1.908,28,0);
   for(int i=0;i<H1->GetXaxis()->GetNbins();i++){//FSAM: L-X
-    H1->SetBinContent(i,H1->GetBinContent(i)+F1->Eval(H1->GetBinLowEdge(i)));
+    H1->SetBinContent(i,H1->GetBinContent(i)+fDSAM->Eval(H1->GetBinLowEdge(i)));
   }
 
   {
@@ -59,34 +62,34 @@
   delete hs; hs = new THStack("hs","Expected STJ Signal");
 
   //Expected STJ Signal_________________________________________________________
-  F2->SetParameters(1e6,111.5263,0.2,0.04);
+  fVoigt->SetParameters(1e6,111.5263,0.2,0.04);
   for(int i=0;i<H1->GetXaxis()->GetNbins();i++){//FVoigt: K-G
-    H1->SetBinContent(i,H1->GetBinContent(i)+F2->Eval(H1->GetBinLowEdge(i)));
-    H2->SetBinContent(i,F2->Eval(H2->GetBinLowEdge(i)));
+    H1->SetBinContent(i,H1->GetBinContent(i)+fVoigt->Eval(H1->GetBinLowEdge(i)));
+    H2->SetBinContent(i,fVoigt->Eval(H2->GetBinLowEdge(i)));
   }
   hs->Add((TH1F*)H2->Clone());
   H2->Reset();
 
-  F3->SetParameters(1e6*0.0406,56.8263,0.2);
+  fGaus->SetParameters(1e6,0.0406,56.8263,0.2);
   for(int i=0;i<H1->GetXaxis()->GetNbins();i++){//FGaus: L-G
-    H1->SetBinContent(i,H1->GetBinContent(i)+F3->Eval(H1->GetBinLowEdge(i)));
-    H2->SetBinContent(i,F3->Eval(H2->GetBinLowEdge(i)));
+    H1->SetBinContent(i,H1->GetBinContent(i)+fGaus->Eval(H1->GetBinLowEdge(i)));
+    H2->SetBinContent(i,fGaus->Eval(H2->GetBinLowEdge(i)));
   }
   hs->Add((TH1F*)H2->Clone());
   H2->Reset();
 
-  F4->SetParameters(1e6*0.1,1.908,27.04,56.8263,0.2,0.04);
+  fDSAMV->SetParameters(1e6*0.1,1.908,28,56.8263,0.2,0.04);
   for(int i=0;i<H1->GetXaxis()->GetNbins();i++){//FDSAMV: K-X
-    H1->SetBinContent(i,H1->GetBinContent(i)+F4->Eval(H1->GetBinLowEdge(i)));
-    H2->SetBinContent(i,F4->Eval(H2->GetBinLowEdge(i)));
+    H1->SetBinContent(i,H1->GetBinContent(i)+fDSAMV->Eval(H1->GetBinLowEdge(i)));
+    H2->SetBinContent(i,fDSAMV->Eval(H2->GetBinLowEdge(i)));
   }
   hs->Add((TH1F*)H2->Clone());
   H2->Reset();
 
-  F5->SetParameters(1e6*0.1*0.0406,1.908,27.04,0,0.2);
+  fDSAMG->SetParameters(1e6*0.1*0.0406,1.908,28,0,0.2);
   for(int i=0;i<H1->GetXaxis()->GetNbins();i++){//FDSAMG: L-X
-    H1->SetBinContent(i,H1->GetBinContent(i)+F5->Eval(H1->GetBinLowEdge(i)));
-    H2->SetBinContent(i,F5->Eval(H2->GetBinLowEdge(i)));
+    H1->SetBinContent(i,H1->GetBinContent(i)+fDSAMG->Eval(H1->GetBinLowEdge(i)));
+    H2->SetBinContent(i,fDSAMG->Eval(H2->GetBinLowEdge(i)));
   }
   hs->Add((TH1F*)H2->Clone());
   H2->Reset();
@@ -98,34 +101,34 @@
   delete hs; hs = new THStack("hs","Damaged STJ Signal");
 
   //Expected STJ Signal_________________________________________________________
-  F2->SetParameters(1e6,111.5263,3,0.04);
+  fVoigt->SetParameters(1e6,111.5263,3,0.04);
   for(int i=0;i<H1->GetXaxis()->GetNbins();i++){//FVoigt: K-G
-    H1->SetBinContent(i,H1->GetBinContent(i)+F2->Eval(H1->GetBinLowEdge(i)));
-    H2->SetBinContent(i,F2->Eval(H2->GetBinLowEdge(i)));
+    H1->SetBinContent(i,H1->GetBinContent(i)+fVoigt->Eval(H1->GetBinLowEdge(i)));
+    H2->SetBinContent(i,fVoigt->Eval(H2->GetBinLowEdge(i)));
   }
   hs->Add((TH1F*)H2->Clone());
   H2->Reset();
 
-  F3->SetParameters(1e6*0.0406,56.8263,3);
+  fGaus->SetParameters(1e6,0.0406,56.8263,3);
   for(int i=0;i<H1->GetXaxis()->GetNbins();i++){//FGaus: L-G
-    H1->SetBinContent(i,H1->GetBinContent(i)+F3->Eval(H1->GetBinLowEdge(i)));
-    H2->SetBinContent(i,F3->Eval(H2->GetBinLowEdge(i)));
+    H1->SetBinContent(i,H1->GetBinContent(i)+fGaus->Eval(H1->GetBinLowEdge(i)));
+    H2->SetBinContent(i,fGaus->Eval(H2->GetBinLowEdge(i)));
   }
   hs->Add((TH1F*)H2->Clone());
   H2->Reset();
 
-  F4->SetParameters(1e6*0.1,1.908,27.04,56.8263,3,0.04);
+  fDSAMV->SetParameters(1e6*0.1,1.908,28,56.8263,3,0.04);
   for(int i=0;i<H1->GetXaxis()->GetNbins();i++){//FDSAMV: K-X
-    H1->SetBinContent(i,H1->GetBinContent(i)+F4->Eval(H1->GetBinLowEdge(i)));
-    H2->SetBinContent(i,F4->Eval(H2->GetBinLowEdge(i)));
+    H1->SetBinContent(i,H1->GetBinContent(i)+fDSAMV->Eval(H1->GetBinLowEdge(i)));
+    H2->SetBinContent(i,fDSAMV->Eval(H2->GetBinLowEdge(i)));
   }
   hs->Add((TH1F*)H2->Clone());
   H2->Reset();
 
-  F5->SetParameters(1e6*0.1*0.0406,1.908,27.04,0,3);
+  fDSAMG->SetParameters(1e6*0.1*0.0406,1.908,28,0,3);
   for(int i=0;i<H1->GetXaxis()->GetNbins();i++){//FDSAMG: L-X
-    H1->SetBinContent(i,H1->GetBinContent(i)+F5->Eval(H1->GetBinLowEdge(i)));
-    H2->SetBinContent(i,F5->Eval(H2->GetBinLowEdge(i)));
+    H1->SetBinContent(i,H1->GetBinContent(i)+fDSAMG->Eval(H1->GetBinLowEdge(i)));
+    H2->SetBinContent(i,fDSAMG->Eval(H2->GetBinLowEdge(i)));
   }
   hs->Add((TH1F*)H2->Clone());
   H2->Reset();

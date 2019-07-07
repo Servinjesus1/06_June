@@ -426,8 +426,8 @@ TF1 FDSAM(int &n, TF1* & FN){ //DSAM Function
   while(i<n-1){
   i++; F.SetParName(i,"B_Ratio");  F.SetParameter(i,0.1); F.SetParLimits(i,0,1);
   }
-  i++; F.SetParName(i,"Centroid"); F.SetParameter(i,85);  F.SetParLimits(i,0,90);
   i++; F.SetParName(i,"Decay");    F.SetParameter(i,2);   F.SetParLimits(i,1.7,2.7);
+  i++; F.SetParName(i,"Energy");    F.SetParameter(i,29);   F.SetParLimits(i,10,32);
   i++; F.SetParName(i,"AOffset");   F.SetParameter(i,59);  F.SetParLimits(i,50,100);
 
   return F;
@@ -453,8 +453,8 @@ TF1 FDSAMConvolved(int &n, TF1* & FC, TF1* &FX){
   while(i<n-1){
   i++; F.SetParName(i,"B_Ratio");  F.SetParameter(i,0.1049); F.SetParLimits(i,0.1040,0.1056); //Branching Ratio: 10.44(4)%
   }
-  i++; F.SetParName(i,"Decay");    F.SetParameter(i,1.6);    F.SetParLimits(i,1,10);
-  i++; F.SetParName(i,"Energy");   F.SetParameter(i,29);     F.SetParLimits(i,10,30);
+  i++; F.SetParName(i,"Decay");    F.SetParameter(i,1.6);    F.SetParLimits(i,1,2.5);
+  i++; F.SetParName(i,"Energy");   F.SetParameter(i,29);     F.SetParLimits(i,10,32);
   i++; F.SetParName(i,"AOffset");   F.SetParameter(i,59);     F.SetParLimits(i,0,100);
   i++; F.SetParName(i,"Sigma");    F.SetParameter(i,3);      F.SetParLimits(i,0,10);
   return F;
@@ -632,7 +632,7 @@ void CanvF(TCanvas* &C,TF1* &F,TH1F* &H,TH1F* &R2, TString nm){
 }
 
 //Miscellaneous_________________________________________________________________
-void ParCopy(TF1* F){//Copy parameters from FT back to Fits
+void ParCopy(TF1* & F){//Copy parameters from FT back to Fits
   map<int,vector<int>> parVec = FTParVec();
   for(auto i : parVec){
     int ii=i.first;
@@ -654,7 +654,7 @@ void ParCopy(TF1* F){//Copy parameters from FT back to Fits
   }
 }
 
-void ParLimit(TF1* F, int i, double l){//Limit parameter to fraction l
+void ParLimit(TF1* &F, int i, double l){//Limit parameter to fraction l
     double a = F->GetParameter(i);
     F->SetParLimits(i,a-l*a,a+l*a);
 }
@@ -669,7 +669,7 @@ void SetSame(TF1* fin, const char* pname, TF1* ffix){//Fix parameter from ffix t
     fin->SetParameter(pnum,ffix->GetParameter(pname));
 }
 
-void ParLimits(TF1* F, double l){//Limit parameters to fraction l
+void ParLimits(TF1* & F, double l){//Limit parameters to fraction l
   for(int i=0; i<F->GetNpar(); i++){
     double a = F->GetParameter(i);
     F->SetParLimits(i,a-l*a,a+l*a);
@@ -680,17 +680,37 @@ void FixName(TF1* fin, const char* pname, Double_t val){//Fix parameter by NAME
   fin->FixParameter(fin->GetParNumber(pname),val);
 }
 
-void FTInitPars(vector<TF1*> IndFits, int fskip){
+void FTInitPars(vector<TF1*> & IndFits, int fskip){
   for(unsigned i=0;i<Fits.size();i++){
     double p[10]; IndFits[i+fskip]->GetParameters(p);
     Fits[i]->SetParameters(p);
     const char* fname = IndFits[i+fskip]->GetTitle();
     Fits[i]->SetTitle(fname);
+    cout << fname << ": Fits[" << i << "] - " << p << endl;
     for(int j=0; j<IndFits[i+fskip]->GetNpar(); j++){
       double a,b; IndFits[i+fskip]->GetParLimits(j,a,b);
       Fits[i]->SetParLimits(j,a,b);
       const char* pname=IndFits[i+fskip]->GetParName(j);
       Fits[i]->SetParName(j,pname);
+      cout << "(" << j << ") - [" << a << "," << b << "] : " << pname << endl;
     }
   }
-} 
+}
+
+unsigned FitNum(const char* pname){
+  unsigned i=0;
+  while(i<Fits.size()){
+    if(strcmp(pname,Fits[i]->GetName())==0){return i;}
+    i++;
+  }
+  cout << "ERROR: Function (" << pname << ") NOT FOUND" << endl;
+  return Fits.size();
+}
+
+void ParSave(vector<double> & p){//Save Fits parameters to a growing list for total function building
+  for(unsigned i=0;i<Fits.size();i++){
+    vector<double> ptemp; ptemp.resize(Fits[i]->GetNpar());
+    Fits[i]->GetParameters(&*ptemp.begin());
+    p.insert(p.end(),ptemp.begin(),ptemp.end());
+  }
+}
