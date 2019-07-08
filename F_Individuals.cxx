@@ -112,7 +112,7 @@
   FitExcl.push_back({174,350}); //BG Excl Regions
 
   //Fit
-  result = H1->Fit(Fits[curfit],"SQ0M");
+  result = H1->Fit(Fits[curfit],"SQN0M");
   result->Print();
 
   //Write to File
@@ -141,7 +141,7 @@
   Fits[curfit]->SetParameter("Constant",peaksY[0]);
 
   //Fit
-  result = R2->Fit(Fits[curfit],"SQ0M");
+  result = R2->Fit(Fits[curfit],"SQN0M");
   result->Print();
 
   //Write to File
@@ -174,7 +174,7 @@
 
   //Fit
   result->Print();
-  result = R2->Fit(Fits[curfit],"SQ0");
+  result = R2->Fit(Fits[curfit],"SQN0");
   Fits[2]->SetParameter(1,Fits[2]->GetParameter(1));
 
   //Write to File
@@ -212,7 +212,7 @@
   Fits[curfit]->SetParLimits(Fits[curfit]->GetParNumber("Tau"),-10,0); //Tau Is Negative
 
   //Fit
-  result = R2->Fit(Fits[curfit],"SQ0M");
+  result = R2->Fit(Fits[curfit],"SQN0M");
   result->Print();
 
   //Write to File
@@ -248,7 +248,7 @@
   // FixSame(Fits[curfit],"Sigma",Fits[FitNum("Voigt")]);
 
   //Fit
-  result = R2->Fit(Fits[curfit],"SQ0M");
+  result = R2->Fit(Fits[curfit],"SQN0M");
   result->Print();
 
   //Write to File
@@ -281,7 +281,7 @@
   FixSame(Fits[curfit],"Constant",Fits[FitNum("Voigt")]);
 
   Fits[curfit]->SetParName(2,"R_LKCapt");
-  Fits[curfit]->SetParLimits(2,0,0.06);
+  Fits[curfit]->SetParLimits(2,0,0.1);
   // FixSame(Fits[curfit],"R_LKCapt",Fits[FitNum("LK_Gaussian")]);
 
   FixName(Fits[curfit],"AOffset",0); //Offset = 0
@@ -289,7 +289,7 @@
   // FixSame(Fits[curfit],"Sigma",Fits[FitNum("Voigt")]);
 
   //Fit
-  result = R2->Fit(Fits[curfit],"SQ0M");
+  result = R2->Fit(Fits[curfit],"SQN0M");
   result->Print();
 
   //Write to File
@@ -334,7 +334,7 @@
   FixSame(Fits[curfit],"Gamma",Fits[FitNum("Voigt")]);
 
   //Fit
-  result = R2->Fit(Fits[curfit],"SQ0M");
+  result = R2->Fit(Fits[curfit],"SQN0M");
   result->Print();
 
   // //Forced Solution
@@ -394,7 +394,7 @@
   FixSame(Fits[curfit],"Gamma",Fits[FitNum("Voigt")]);
 
   // Fit
-  result = R2->Fit(Fits[curfit],"SQ0M");
+  result = R2->Fit(Fits[curfit],"SQN0M");
   result->Print();
 
   //Write to File

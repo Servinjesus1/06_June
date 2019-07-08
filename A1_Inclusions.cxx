@@ -588,22 +588,25 @@ void CanvBasic(TCanvas* C,TF1* F,TH1F* H,TH1F* R2){
   R->GetYaxis()->SetLabelSize(0.06);
   R->Draw();
   TPaveStats* STATS = (TPaveStats*)H->FindObject("stats");
-  C->GetListOfPrimitives()->AddLast(STATS); C->Update(); C->Draw();
+  C->GetListOfPrimitives()->AddLast(STATS); C->Modified();
 }
 
 void CanvE(TCanvas* &C,TF1* &F,TH1F* &H,TH1F* &R2, TString nm){
   CanvBasic(C,F,H,R2);
   C->SaveAs("./Output/E_Sums/" + nm + ".pdf");
+  H->GetListOfFunctions()->Clear();
 }
 
 void CanvG(TCanvas* C,TF1* F,TH1F* H,TH1F* R2, TString nm){
   CanvBasic(C,F,H,R2);
   C->SaveAs("./Output/G_Final/" + nm + ".pdf");
+  H->GetListOfFunctions()->Clear();
 }
 
 void CanvF(TCanvas* &C,TF1* &F,TH1F* &H,TH1F* &R2, TString nm){
   CanvBasic(C,F,H,R2);
   C->SaveAs("./Output/F_Individuals/" + nm + ".pdf");
+  H->GetListOfFunctions()->Clear();
 }
 
 //Miscellaneous_________________________________________________________________
@@ -665,13 +668,13 @@ void FTInitPars(vector<TF1*> & IndFits, int fskip){
     Fits[i]->SetParameters(p);
     const char* fname = IndFits[i+fskip]->GetTitle();
     Fits[i]->SetTitle(fname);
-    cout << fname << ": Fits[" << i << "] - " << p << endl;
+    // cout << fname << ": Fits[" << i << "] - " << p << endl;
     for(int j=0; j<IndFits[i+fskip]->GetNpar(); j++){
       double a,b; IndFits[i+fskip]->GetParLimits(j,a,b);
       Fits[i]->SetParLimits(j,a,b);
       const char* pname=IndFits[i+fskip]->GetParName(j);
       Fits[i]->SetParName(j,pname);
-      cout << "(" << j << ") - [" << a << "," << b << "] : " << pname << endl;
+      // cout << "(" << j << ") - [" << a << "," << b << "] : " << pname << endl;
     }
   }
 }
@@ -691,6 +694,19 @@ void ParSave(vector<double> & p){//Save Fits parameters to a growing list for to
     vector<double> ptemp; ptemp.resize(Fits[i]->GetNpar());
     Fits[i]->GetParameters(&*ptemp.begin());
     p.insert(p.end(),ptemp.begin(),ptemp.end());
+  }
+}
+
+void UpdateParLims(TF1* FT){ //Update parameter limits after parameter merging, shouldn't matter...
+  map<int,vector<int>> parVec = FTParVec();
+  int ALT = 0;
+  double a1,b1;
+  double a2,b2;
+  for(unsigned i=0; i<parVec.size(); i++){//Update fits in parVec if changed
+    for(int j=0;j<Fits[i]->GetNpar();j++){
+      FT->GetParLimits(parVec[i][j],a1,b1); //Merged FT parameter limits
+      Fits[i]->SetParLimits(j,a1,b1); //Set limits of original fit in case merged
+    }
   }
 }
 

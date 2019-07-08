@@ -5,7 +5,7 @@
 {
   #include <A1_Inclusions.cxx+>
   //ROOT Variables
-  // gROOT->SetBatch(kTRUE);
+  gROOT->SetBatch(kTRUE);
 
   //Initial Variables___________________________________________________________
 
@@ -87,6 +87,7 @@
   parx[3] = {};
   parVec = FTParVec();
   delete FT; FT = new TF1(  FTotal(r1,r2,parVec));
+  PrintParameters(FT);
 
   //Fit
   result = H1->Fit(FT,"SQ0");
@@ -102,10 +103,10 @@
   FitExcl = FitExcl2;
   R1 = (TH1F*)H1->Clone("R1");
   CanvG(CF,FT,H1,R1,"1_Pk1_900");
-  Rts->cd(); result->Write("R1");
-  Hgs->cd(); R1->Write("R1_Pk1");
-  Fns->cd(); FT->Write("F1");
-  Cvs->cd(); CF->Write("C1");
+  // Rts->cd(); result->Write("R1");
+  // Hgs->cd(); R1->Write("R1_Pk1");
+  // Fns->cd(); FT->Write("F1");
+  // Cvs->cd(); CF->Write("C1");
 
   //Reset Objects
   parx.clear();
@@ -129,10 +130,10 @@
 
   //Parameter Guesses
   FixName(Fits[0],"Constant",FT->GetParameter("(1) Constant")); //Voigt
-  // FixName(Fits[0],"Sigma",   FT->GetParameter("(1) Sigma"));    //Voigt
+  FixName(Fits[0],"Sigma",   FT->GetParameter("(1) Sigma"));    //Voigt
 
   FixName(Fits[1],"AOffset",  0); //Offset = 0
-  // FixName(Fits[1],"Sigma",   FT->GetParameter("(1) Sigma"));    //Voigt
+  FixName(Fits[1],"Sigma",   FT->GetParameter("(1) Sigma"));    //Voigt
 
   FixName(Fits[2],"Constant",FT->GetParameter("(1) Constant")); //Voigt
   FixName(Fits[2],"Gamma",   FT->GetParameter("(1) Gamma"));    //Voigt
@@ -140,7 +141,7 @@
 
   FixName(Fits[3],"Constant",FT->GetParameter("(1) Constant")); //Voigt
   FixName(Fits[3],"Offset",  FT->GetParameter("(2) Offset"));    //EMV
-  // FixName(Fits[3],"Sigma",   FT->GetParameter("(2) Sigma"));    //EMV
+  FixName(Fits[3],"Sigma",   FT->GetParameter("(2) Sigma"));    //EMV
   FixName(Fits[3],"Tau",     FT->GetParameter("(2) Tau"));      //EMV
   FixName(Fits[3],"Gamma",   FT->GetParameter("(1) Gamma"));    //Voigt
 
@@ -152,9 +153,10 @@
   parx[3] = {{"B_Ratio",1},{"Energy",1},{"AOffset",2}};
   parVec = FTParVec();
   delete FT; FT = new TF1(FTotal(r1,r2,parVec));
+  PrintParameters(FT);
 
   //Fit
-  result = R1->Fit(FT,"SQ0");
+  result = R1->Fit(FT,"SQN0");
   ParSave(p); //Appends new parameters to old parameters
   TF1* DSAM;
   Fits.push_back(new TF1(FDSAM(aDSAMV,DSAM))); //DSAM before gaus for comparison
@@ -169,10 +171,10 @@
   r2=220; CanvG(CF,FT,R1,R2,"2_Pk2+3"); r2=900;
   FitExcl = FitExcl2;
   CanvG(CF,FT,R1,R2,"2_Pk2+3_900");
-  Rts->cd(); result->Write("R2");
-  Hgs->cd(); R2->Write("R2_Pk2+3");
-  Fns->cd(); FT->Write("F2");
-  Cvs->cd(); CF->Write("C2");
+  // Rts->cd(); result->Write("R2");
+  // Hgs->cd(); R2->Write("R2_Pk2+3");
+  // Fns->cd(); FT->Write("F2");
+  // Cvs->cd(); CF->Write("C2");
 
   //Reset Objects
   parx.clear();
@@ -228,14 +230,15 @@
   parx[2] = {{"Constant",1},{"Centroid",1},{"Gamma",1}};                                        //EMV1 (Const R_Escape Centroid Offset Sigma Tau Gamma)
   parx[3] = {};                                                                                 //EMG0 (Constant Centroid Offset Sigma Tau)
   parx[4] = {{"Constant",1}};                                                                   //Gaus (Constant R_LKCapt Centroid Sigma)
-  parx[5] = {{"Constant",1},{"R_LKCapt",4}};                                                    //DSAMG (Constant B_Ratio R_LKCapt Decay Energy AOffset Sigma)
-  // parx[5] = {{"Constant",1},{"Sigma",1},{"R_LKCapt",4}};                                     //DSAMG (Constant B_Ratio R_LKCapt Decay Energy AOffset Sigma)
-  parx[6] = {{"Constant",1},{"B_Ratio",5},{"Decay",5},{"Energy",5},{"Gamma",1}};                //DSAMV (Constant B_Ratio Decay Energy AOffset Sigma Gamma)
-  // parx[6] = {{"Constant",1},{"B_Ratio",5},{"Decay",5},{"Energy",5},{"Sigma",1},{"Gamma",1}}; //DSAMV (Constant B_Ratio Decay Energy AOffset Sigma Gamma)
-  parx[7] = {{"Constant",1},{"B_Ratio",5},{"Energy",5},{"AOffset",6},{"Tau",2},{"Gamma",1}};    //EMV2 (Constant R_Escape B_Ratio Energy AOffset Offset Sigma Tau Gamma)
-  // parx[7] = {{"Sigma",2},{"Tau",2},{"Gamma",1}};                                             //EMV2 (Constant R_Escape B_Ratio Energy AOffset Offset Sigma Tau Gamma)
+  // parx[5] = {{"Constant",1},{"R_LKCapt",4}};                                                    //DSAMG (Constant B_Ratio R_LKCapt Decay Energy AOffset Sigma)
+  parx[5] = {{"Constant",1},{"Sigma",1},{"R_LKCapt",4}};                                     //DSAMG (Constant B_Ratio R_LKCapt Decay Energy AOffset Sigma)
+  // parx[6] = {{"Constant",1},{"B_Ratio",5},{"Decay",5},{"Energy",5},{"Gamma",1}};                //DSAMV (Constant B_Ratio Decay Energy AOffset Sigma Gamma)
+  parx[6] = {{"Constant",1},{"B_Ratio",5},{"Decay",5},{"Energy",5},{"Sigma",1},{"Gamma",1}}; //DSAMV (Constant B_Ratio Decay Energy AOffset Sigma Gamma)
+  // parx[7] = {{"Constant",1},{"B_Ratio",5},{"Energy",5},{"AOffset",6},{"Tau",2},{"Gamma",1}};    //EMV2 (Constant R_Escape B_Ratio Energy AOffset Offset Sigma Tau Gamma)
+  parx[7] = {{"Sigma",2},{"Tau",2},{"Gamma",1}};                                             //EMV2 (Constant R_Escape B_Ratio Energy AOffset Offset Sigma Tau Gamma)
   parVec = FTParVec();
   delete FT; FT = new TF1(FTotal(r1,r2,parVec));
+  PrintParameters(FT);
 
   //Prelim Write to File
   H1->SetTitle("(3) Complete Fit");
@@ -251,13 +254,7 @@
   FitExcl = FitExcl2;
 
   //Fit
-  for(int i=0;i<FT->GetNpar();i++){
-    double a,b; FT->GetParLimits(i,a,b);
-    if(FT->GetParameter(i)<a||FT->GetParameter(i)>b){
-      cout << i<<": " << FT->GetParName(i) << "[" << a << " (" <<FT->GetParameter(i)<<") " << b << "]" << endl;
-    }
-  }
-  result = H1->Fit(FT,"SQ0");
+  result = H1->Fit(FT,"SQN0");
 
   //Write to File
   H1->SetTitle("(3) Complete Fit");
