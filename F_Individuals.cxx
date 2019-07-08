@@ -32,6 +32,7 @@
   TF1* FT; //Total Function, sum of Fits[]
   TFitResultPtr result; //Fit Results
   TCanvas* CF = new TCanvas("Fit","Fit Result",1920,1080); //Fit Canvas
+  map<int,vector<int>> parVec = FTParVec();
 
   //Files
   TFile* FI = new TFile(f_in);
@@ -172,8 +173,8 @@
   FixSame(Fits[curfit],"Gamma",Fits[FitNum("Voigt")]);
 
   //Fit
-  result = R2->Fit(Fits[curfit],"SQ0M");
   result->Print();
+  result = R2->Fit(Fits[curfit],"SQ0");
   Fits[2]->SetParameter(1,Fits[2]->GetParameter(1));
 
   //Write to File
@@ -189,7 +190,8 @@
   curfit++;
 
   TVirtualPad* fpad = CF->GetPad(1);
-  FT = new TF1(FTotal(r1,300));
+  parVec = FTParVec();
+  FT = new TF1(FTotal(r1,300,parVec));
   fpad->cd(); FT->Draw("Same");
   CF->SaveAs("Output/F_Individuals/TS3.pdf");
 
@@ -226,7 +228,8 @@
   curfit++;
 
   fpad = CF->GetPad(1);
-  FT = new TF1(FTotal(r1,300));
+  parVec = FTParVec();
+  FT = new TF1(FTotal(r1,300,parVec));
   fpad->cd(); FT->Draw("Same");
   CF->SaveAs("Output/F_Individuals/TS4.pdf");
 
@@ -234,15 +237,15 @@
   Fits.push_back(new TF1(FGaus(r1,r2))); //Create Gauss Fn (Constant R_LKCapt Centroid Sigma)
 
   //Exclusion regions
-  FitExcl.push_back({r1,50});
-  FitExcl.push_back({60,r2});
+  FitExcl.push_back({r1,45});
+  FitExcl.push_back({62,r2});
 
   //Parameter Guesses
   FixSame(Fits[curfit],"Constant",Fits[FitNum("Voigt")]);
 
   Fits[curfit]->SetParameter("Centroid",peaksX[2]);
 
-  FixSame(Fits[curfit],"Sigma",Fits[FitNum("Voigt")]);
+  // FixSame(Fits[curfit],"Sigma",Fits[FitNum("Voigt")]);
 
   //Fit
   result = R2->Fit(Fits[curfit],"SQ0M");
@@ -261,7 +264,8 @@
   curfit++;
 
   fpad = CF->GetPad(1);
-  FT = new TF1(FTotal(r1,300));
+  parVec = FTParVec();
+  FT = new TF1(FTotal(r1,300,parVec));
   fpad->cd(); FT->Draw("Same");
   CF->SaveAs("Output/F_Individuals/TS5.pdf");
 
@@ -270,18 +274,19 @@
   Fits.push_back(new TF1(FDSAMG(aDSAMG,DSAMG))); //DSAMG (Constant B_Ratio R_LKCapt Decay Energy AOffset Sigma)
 
   //Exclusion regions
-  FitExcl.push_back({r1,15});
-  FitExcl.push_back({38,r2});
+  // FitExcl.push_back({r1,15});
+  FitExcl.push_back({45,r2});
 
   //Parameter Guesses
   FixSame(Fits[curfit],"Constant",Fits[FitNum("Voigt")]);
 
   Fits[curfit]->SetParName(2,"R_LKCapt");
-  FixSame(Fits[curfit],"R_LKCapt",Fits[FitNum("LK_Gaussian")]);
+  Fits[curfit]->SetParLimits(2,0,0.06);
+  // FixSame(Fits[curfit],"R_LKCapt",Fits[FitNum("LK_Gaussian")]);
 
   FixName(Fits[curfit],"AOffset",0); //Offset = 0
 
-  FixSame(Fits[curfit],"Sigma",Fits[FitNum("Voigt")]);
+  // FixSame(Fits[curfit],"Sigma",Fits[FitNum("Voigt")]);
 
   //Fit
   result = R2->Fit(Fits[curfit],"SQ0M");
@@ -300,7 +305,8 @@
   curfit++;
 
   fpad = CF->GetPad(1);
-  FT = new TF1(FTotal(r1,300));
+  parVec = FTParVec();
+  FT = new TF1(FTotal(r1,300,parVec));
   fpad->cd(); FT->Draw("Same");
   CF->SaveAs("Output/F_Individuals/TS6.pdf");
 
@@ -323,7 +329,7 @@
 
   FixName(Fits[curfit],"AOffset",54.75); //Offset = Auger
 
-  FixSame(Fits[curfit],"Sigma",Fits[FitNum("Voigt")]);
+  // FixSame(Fits[curfit],"Sigma",Fits[FitNum("Voigt")]);
 
   FixSame(Fits[curfit],"Gamma",Fits[FitNum("Voigt")]);
 
@@ -349,7 +355,8 @@
   curfit++;
 
   fpad = CF->GetPad(1);
-  FT = new TF1(FTotal(r1,300));
+  parVec = FTParVec();
+  FT = new TF1(FTotal(r1,300,parVec));
   fpad->cd(); FT->Draw("Same");
   CF->SaveAs("Output/F_Individuals/TS7.pdf");
 
@@ -380,7 +387,7 @@
   SetSame(Fits[curfit],"Offset",Fits[FitNum("EMV1")]);
   ParLimit(Fits[curfit],5,0.2);
 
-  FixSame(Fits[curfit],"Sigma",Fits[FitNum("EMV1")]);
+  // FixSame(Fits[curfit],"Sigma",Fits[FitNum("EMV1")]);
 
   FixSame(Fits[curfit],"Tau",Fits[FitNum("EMV1")]);
 
@@ -403,13 +410,15 @@
   curfit++;
 
   fpad = CF->GetPad(1);
-  FT = new TF1(FTotal(r1,300));
+  parVec = FTParVec();
+  FT = new TF1(FTotal(r1,300,parVec));
   fpad->cd(); FT->Draw("Same");
   CF->SaveAs("Output/F_Individuals/TS8.pdf");
 
   //FT__________________________________________________________________________
   //Recreate FT
-  FT = new TF1(FTotal(r1,300));
+  parVec = FTParVec();
+  FT = new TF1(FTotal(r1,300,parVec));
 
   //Write to File
   H1->SetTitle("Total");

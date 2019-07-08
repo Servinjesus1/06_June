@@ -23,6 +23,7 @@
   TFitResultPtr result; //Fit Results
   TCanvas* CF = new TCanvas("Fit","Fit Result",1920,1080); //Fit Canvas
   CF->SetLogy();
+  map<int,vector<int>> parVec;
 
   //Files
   TFile* FI = new TFile(f_in);
@@ -84,11 +85,11 @@
   parx[1] = {};
   parx[2] = {{"Constant",1},{"Centroid",1},{"Gamma",1}};
   parx[3] = {};
-  delete FT; FT = new TF1(FTotal(r1,r2));
+  parVec = FTParVec();
+  delete FT; FT = new TF1(  FTotal(r1,r2,parVec));
 
   //Fit
   result = H1->Fit(FT,"SQ0");
-  ParCopy(FT);
   vector<double> p; ParSave(p);
 
   //Write to File
@@ -121,8 +122,7 @@
   Fits[3]->SetName("EMV2");
 
   //Exclusion regions
-  FitExcl.push_back({100,168});
-  FitExcl.push_back({177,500});
+  FitExcl.push_back({100,r2});
 
   //Previous Parameters
   FTInitPars(IndFits, 4);
@@ -146,14 +146,15 @@
 
   //FT
   parx[0] = {};
-  parx[1] = {{"R_LKCapt",0}};
+  // parx[1] = {{"R_LKCapt",0}};
+  parx[1] = {};
   parx[2] = {{"B_Ratio",1},{"Decay",1},{"Energy",1}};
   parx[3] = {{"B_Ratio",1},{"Energy",1},{"AOffset",2}};
-  delete FT; FT = new TF1(FTotal(r1,r2));
+  parVec = FTParVec();
+  delete FT; FT = new TF1(FTotal(r1,r2,parVec));
 
   //Fit
   result = R1->Fit(FT,"SQ0");
-  ParCopy(FT);
   ParSave(p); //Appends new parameters to old parameters
   TF1* DSAM;
   Fits.push_back(new TF1(FDSAM(aDSAMV,DSAM))); //DSAM before gaus for comparison
@@ -198,6 +199,7 @@
   FitExcl.push_back({177,500});
 
   //Previous Parameters
+  FTInitPars(IndFits, 0);
     int j=0;
     for(unsigned k=0;k<Fits.size();k++){
       for(int i=0;i<Fits[k]->GetNpar();i++){
@@ -217,8 +219,8 @@
     }
 
   //Parameter Guesses
-  FixName(Fits[6],"Offset",  54.75); //Offset = Auger
-  FixName(Fits[5],"Offset",  0); //Offset = 0
+  FixName(Fits[6],"AOffset",  54.75); //Offset = Auger
+  FixName(Fits[5],"AOffset",  0); //Offset = 0
 
   //FT
   parx[0] = {};                                                                                 //BKG (Const1 Slope1 Const2 Slope2)
@@ -226,20 +228,14 @@
   parx[2] = {{"Constant",1},{"Centroid",1},{"Gamma",1}};                                        //EMV1 (Const R_Escape Centroid Offset Sigma Tau Gamma)
   parx[3] = {};                                                                                 //EMG0 (Constant Centroid Offset Sigma Tau)
   parx[4] = {{"Constant",1}};                                                                   //Gaus (Constant R_LKCapt Centroid Sigma)
-  parx[5] = {{"Constant",1},{"R_LKCapt",4}};                                     //DSAMG (Constant B_Ratio R_LKCapt Decay Energy AOffset Sigma)
+  parx[5] = {{"Constant",1},{"R_LKCapt",4}};                                                    //DSAMG (Constant B_Ratio R_LKCapt Decay Energy AOffset Sigma)
   // parx[5] = {{"Constant",1},{"Sigma",1},{"R_LKCapt",4}};                                     //DSAMG (Constant B_Ratio R_LKCapt Decay Energy AOffset Sigma)
-  parx[6] = {{"Constant",1},{"B_Ratio",5},{"Decay",5},{"Energy",5},{"Gamma",1}}; //DSAMV (Constant B_Ratio Decay Energy AOffset Sigma Gamma)
+  parx[6] = {{"Constant",1},{"B_Ratio",5},{"Decay",5},{"Energy",5},{"Gamma",1}};                //DSAMV (Constant B_Ratio Decay Energy AOffset Sigma Gamma)
   // parx[6] = {{"Constant",1},{"B_Ratio",5},{"Decay",5},{"Energy",5},{"Sigma",1},{"Gamma",1}}; //DSAMV (Constant B_Ratio Decay Energy AOffset Sigma Gamma)
-  parx[7] = {{"Constant",1},{"B_Ratio",5},{"Energy",5},{"AOffset",6},{"Tau",2},{"Gamma",1}};                                             //EMV2 (Constant R_Escape B_Ratio Energy AOffset Offset Sigma Tau Gamma)
+  parx[7] = {{"Constant",1},{"B_Ratio",5},{"Energy",5},{"AOffset",6},{"Tau",2},{"Gamma",1}};    //EMV2 (Constant R_Escape B_Ratio Energy AOffset Offset Sigma Tau Gamma)
   // parx[7] = {{"Sigma",2},{"Tau",2},{"Gamma",1}};                                             //EMV2 (Constant R_Escape B_Ratio Energy AOffset Offset Sigma Tau Gamma)
-  delete FT; FT = new TF1(FTotal(r1,r2));
-  ParCopy(FT);
-
-  for(int i=0;i<FT->GetNpar();i++){
-    cout << FT->GetParName(i) << endl;
-  }
-  ParCheck(FT);
-
+  parVec = FTParVec();
+  delete FT; FT = new TF1(FTotal(r1,r2,parVec));
 
   //Prelim Write to File
   H1->SetTitle("(3) Complete Fit");
@@ -247,14 +243,21 @@
   FT->SetTitle("(3) Complete Fit");
   R1 = (TH1F*)H1->Clone("R1");
   FitExcl2 = FitExcl;
+  H1->SetStats(0);
   r2=160; CanvG(CF,FT,H1,R1,"3_All_Prelim"); r2=900;
+  H1->SetStats(1);
   FitExcl = FitExcl2;
   CanvG(CF,FT,H1,R1,"3_All_Prelim_900");
   FitExcl = FitExcl2;
 
   //Fit
-  result = H1->Fit(FT,"SQ0EM");
-  ParCopy(FT);
+  for(int i=0;i<FT->GetNpar();i++){
+    double a,b; FT->GetParLimits(i,a,b);
+    if(FT->GetParameter(i)<a||FT->GetParameter(i)>b){
+      cout << i<<": " << FT->GetParName(i) << "[" << a << " (" <<FT->GetParameter(i)<<") " << b << "]" << endl;
+    }
+  }
+  result = H1->Fit(FT,"SQ0");
 
   //Write to File
   H1->SetTitle("(3) Complete Fit");

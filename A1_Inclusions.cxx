@@ -183,13 +183,19 @@ Double_t FFNormAmpN(int &a, TF1* & F, Double_t* x, Double_t* p){
   if(ExclRange(x[0])){TF1::RejectPoint(); return 0;}
 
   int ALT = 0;
-  for(int i=0; i<F->GetNpar(); i++) if(F->GetParameter(i)!=p[i+a]){ALT++;}
+  for(int i=0; i<F->GetNpar(); i++){
+    if(F->GetParameter(i)!=p[i+a]){
+      ALT++;
+      F->SetParameter(i,p[i+a]);
+      // cout << F->GetName() << "(" << i << ") is now " << F->GetParameter(i) << endl;
+    }
+  }
   Double_t A = 1; for(int i=0;i<a;i++) A*=p[i]; //a constants multiplied together
-  if(ALT!=0){
-    for(int i=0;i<F->GetNpar();i++) F->SetParameter(i,p[i+a]);
+  if(ALT>0){
     F->Update(); //For Normalization Integral
   }
-  return A*F->EvalPar(x,p+a);
+
+  return A*F->Eval(x[0]); //Does Eval work?
 }
 
 Double_t FFNormAmpNC(int &a, int &c, TF1* & F, Double_t* x, Double_t* p){
@@ -197,56 +203,20 @@ Double_t FFNormAmpNC(int &a, int &c, TF1* & F, Double_t* x, Double_t* p){
   if(ExclRange(x[0])){TF1::RejectPoint(); return 0;}
 
   int ALT = 0;
-  for(int i=0; i<F->GetNpar(); i++) if(F->GetParameter(i)!=p[i+a+c]){ALT++;}
+  for(int i=0; i<F->GetNpar(); i++){
+    if(F->GetParameter(i)!=p[i+a+c]){
+      ALT++;
+      F->SetParameter(i,p[i+a+c]);
+    }
+  }
   Double_t A = 1; for(int i=0;i<a;i++) A*=p[i]; //a constants multiplied together
   Double_t C = 0; for(int i=0;i<c;i++) C+=p[i+a]; //c offsets added together
   if(ALT!=0){
-    for(int i=0;i<F->GetNpar();i++) F->SetParameter(i,p[i+a+c]);
     F->Update(); //For Normalization Integral
-    // ConvEMG->Update();
   }
-  double y = x[0]-C; //new centroid
-  return A*F->EvalPar(&y,p+a+c);
-}
 
-// Double_t FFNormAmpBR(TF1* & F, Double_t* x, Double_t* p){
-//   //For convolved (opt normalized) functions to exclude and apply branching ratio amplitude (2 parameters)
-//   if(ExclRange(x[0])){TF1::RejectPoint(); return 0;}
-//
-//   int ALT = 0;
-//   for(int i=0; i<F->GetNpar(); i++) if(F->GetParameter(i)!=p[i+2]){ALT++;}
-//   Double_t A = p[0]*p[1]; //Constant
-//   if(ALT!=0){
-//     for(int i=0;i<F->GetNpar();i++) F->SetParameter(i,p[i+2]);
-//     F->Update(); //For Normalization Integral
-//   }
-//   return A*F->EvalPar(x,p+2);
-// }
-//
-// Double_t FFExMoVoigt(TF1* & F, Double_t* x, Double_t* p) {
-//   //Create EMV from convolved function. Need to exclude regions, then Normalize
-//   //if parameters have changed. Also, Constant becomes two parameters to allow
-//   //locking the Escape Ratio and Constant separately.
-//   //Exclude
-//   if(ExclRange(x[0])){TF1::RejectPoint(kTRUE); return 0;}
-//
-//   //Normalize (if parameters have changed)
-//   int ALT = 0;
-//   for(int i=0; i<F->GetNpar(); i++){
-//     if(F->GetParameter(i)!=p[i]){ALT++;}
-//   }
-//   Double_t A = p[0]*p[1]; //Constant
-//
-//   if(ALT>0){
-//     for(int i=0;i<F->GetNpar();i++){//Take passed parameters and set to EMV
-//       F->SetParameter(i,p[i]);
-//     }
-//     F->Update();
-//     double NC = F->Integral(r1,r2,1e-4);
-//     return A*F->Eval(x[0])/NC;
-//   }
-//   return A*F->Eval(x[0]);
-// }
+  return A*F->Eval(x[0]-C);
+}
 
 Double_t FFDSAM0(Double_t* x, Double_t* p){ //Constant-Free DSAM Function
   if(ExclRange(x[0])){TF1::RejectPoint();}
@@ -256,73 +226,78 @@ Double_t FFDSAM0(Double_t* x, Double_t* p){ //Constant-Free DSAM Function
   Double_t S = p[0]; //Decay parameter
   Double_t EE = p[1]; //Energy Paramter
   Double_t E0 = p[2]; //AOffset Parameter
+  if(E0<1){E0=0;} //Since I can't seem to fix a parameter at zero...
   Double_t F = (2/EE)*(S/(S-1))*(1-TMath::Power(2*TMath::Abs(E-E0-EE)/EE,S-1));
   if(F<0) return 0;
   return F;
 }
 
-Double_t FFDSAM(Double_t* x, Double_t* p){//Normalized DSAM * Amplitude
-  TF1* F = (TF1*)gROOT->GetFunction("DSAMfn");
+// Double_t FFDSAM(Double_t* x, Double_t* p){//Normalized DSAM * Amplitude
+//   TF1* F = (TF1*)gROOT->GetFunction("DSAMfn");
+//
+//   for(int i=0; i<F->GetNpar(); i++){
+//       F->SetParameter(i,p[i+2]); //Take passed parameters and set to DSAM
+//   }
+//
+//   F->Update(); //Normalizes DSAMNorm
+//   Double_t A = p[0]*p[1];
+//   return A*F->Eval(x[0]);
+// }
+//
+// Double_t FFDSAMC(Double_t* x, Double_t* p){//Normalized DSAMConvolved * Amplitude
+//   TF1* F = (TF1*)gROOT->GetFunction("DSAMconv");
+//
+//   for(int i=0; i<F->GetNpar(); i++){
+//       F->SetParameter(i,p[i+2]); //Take passed parameters and set to DSAM
+//   }
+//
+//   F->Update(); //Normalizes DSAMNorm
+//   Double_t A = p[0]*p[1];
+//   return A*F->Eval(x[0]);
+// }
 
-  for(int i=0; i<F->GetNpar(); i++){
-      F->SetParameter(i,p[i+2]); //Take passed parameters and set to DSAM
-  }
-
-  F->Update(); //Normalizes DSAMNorm
-  Double_t A = p[0]*p[1];
-  return A*F->Eval(x[0]);
-}
-
-Double_t FFDSAMC(Double_t* x, Double_t* p){//Normalized DSAMConvolved * Amplitude
-  TF1* F = (TF1*)gROOT->GetFunction("DSAMconv");
-
-  for(int i=0; i<F->GetNpar(); i++){
-      F->SetParameter(i,p[i+2]); //Take passed parameters and set to DSAM
-  }
-
-  F->Update(); //Normalizes DSAMNorm
-  Double_t A = p[0]*p[1];
-  return A*F->Eval(x[0]);
-}
-
-Double_t FFTotal(Double_t* x, Double_t* p) {
+Double_t FFTotal(Double_t* x, Double_t* p, map<int,vector<int>> & parVec) {
   if(ExclRange(x[0])){TF1::RejectPoint(); return 0;}
-  //Convert parVec to p[]
-  map<int,vector<int>> parVec = FTParVec();
-  map<int,vector<double>> px;
-  for(auto y : parVec){
-    int i = y.first;
-    px[i].resize(parVec[i].size());
-    for(unsigned j=0;j<parVec[i].size();j++){
-      px[i][j]=p[parVec[i][j]];
+
+  //Check for Parameter differences
+  int ALT = 0;
+  for(unsigned i=0; i<parVec.size(); i++){//Update fits in parVec if changed
+    for(int j=0;j<Fits[i]->GetNpar();j++){
+      if(Fits[i]->GetParameter(j)!=p[parVec[i][j]]){
+        ALT++;
+        Fits[i]->SetParameter(j,p[parVec[i][j]]);
+      }
     }
+    if(ALT>0){Fits[i]->Update(); ALT=0;}//Call Update if any parameters change
   }
-  //EvalPar
+
+  //Evaluate
   Double_t FT=0;
   for(auto y : parVec){
     int i = y.first;
-    FT+=Fits[i]->EvalPar(x,&px[i][0]);
+    FT+=Fits[i]->Eval(x[0]);
   }
+
   return FT;
 }
 
-Double_t FFTotSimple(Double_t* x, Double_t* p) {
-  //EvalPar
-  Double_t FT=0;
-  for(auto y : Fits){
-    FT+=y->Eval(*x);
-  }
-  return FT;
-}
+// Double_t FFTotSimple(Double_t* x, Double_t* p) {
+//   //EvalPar
+//   Double_t FT=0;
+//   for(auto y : Fits){
+//     FT+=y->Eval(*x);
+//   }
+//   return FT;
+// }
 
-Double_t FReject(TF1* F,Double_t* x, Double_t* p) {//Functional to exclude
-  cout << p[0] << endl;
-  cout << "FReject Called" << endl;
-  //Exclude Points Now (e.g. post convolution)
-  if(ExclRange(x[0])){TF1::RejectPoint(); return 0;}
-  //EvalPar
-  return F->EvalPar(x,p);
-}
+// Double_t FReject(TF1* F,Double_t* x, Double_t* p) {//Functional to exclude
+//   cout << p[0] << endl;
+//   cout << "FReject Called" << endl;
+//   //Exclude Points Now (e.g. post convolution)
+//   if(ExclRange(x[0])){TF1::RejectPoint(); return 0;}
+//   //EvalPar
+//   return F->EvalPar(x,p);
+// }
 
 //TF1 Forms_____________________________________________________________________
 TF1 FBg(Double_t r1, Double_t r2){
@@ -478,11 +453,11 @@ TF1 FDSAMV(int &n,TF1* & FC){ //Convolved with Voigt
   return F;
 }
 
-TF1 FTotal(Double_t r1, Double_t r2){ //Combines pre-defined Peak Functions
-  map<int,vector<int>> parVec = FTParVec();
+TF1 FTotal(Double_t r1, Double_t r2, map<int,vector<int>> & parVec){ //Combines pre-defined Peak Functions
   int ptotal = get_max(parVec)+1;
-  TF1 FT("Total_Function",FFTotal,r1,r2,ptotal);
-  FT.SetNpx(250); FT.SetLineWidth(2); //FT.SetFillStyle(1001);
+  vector<TF1*> tempFits = Fits;
+  TF1 FT("Total_Function",[&](Double_t* x, Double_t* p){return FFTotal(x,p,parVec);},r1,r2,ptotal);
+  FT.SetNpx(750); FT.SetLineWidth(2); //FT.SetFillStyle(1001);
   //FT.SetFillColorAlpha(kRed,0.4);
 
   //Convert parVec to names/parameters
@@ -491,12 +466,12 @@ TF1 FTotal(Double_t r1, Double_t r2){ //Combines pre-defined Peak Functions
       int i = x.first;
       for(size_t j=0;j<parVec[i].size();j++){
         if(psofar.end()==find(psofar.begin(),psofar.end(),parVec[i][j])){
-          const char* nm = FTParName(i,Fits[i]->GetParName(j)).c_str();
+          const char* nm = FTParName(i,tempFits[i]->GetParName(j)).c_str();
           FT.SetParName(parVec[i][j],nm);
           double a,b;
-          Fits[i]->GetParLimits(j,a,b);
+          tempFits[i]->GetParLimits(j,a,b);
           FT.SetParLimits(parVec[i][j],a,b);
-          FT.SetParameter(parVec[i][j],Fits[i]->GetParameter(j));
+          FT.SetParameter(parVec[i][j],tempFits[i]->GetParameter(j));
           psofar.push_back(parVec[i][j]);
         }
       }
@@ -656,7 +631,7 @@ void ParCopy(TF1* & F){//Copy parameters from FT back to Fits
 
 void ParLimit(TF1* &F, int i, double l){//Limit parameter to fraction l
     double a = F->GetParameter(i);
-    F->SetParLimits(i,a-l*a,a+l*a);
+    F->SetParLimits(i,a-abs(l*a),a+abs(l*a));
 }
 
 void FixSame(TF1* fin, const char* pname, TF1* ffix){//Fix parameter from ffix to fin
@@ -672,12 +647,16 @@ void SetSame(TF1* fin, const char* pname, TF1* ffix){//Fix parameter from ffix t
 void ParLimits(TF1* & F, double l){//Limit parameters to fraction l
   for(int i=0; i<F->GetNpar(); i++){
     double a = F->GetParameter(i);
-    F->SetParLimits(i,a-l*a,a+l*a);
+    F->SetParLimits(i,a-abs(l*a),a+abs(l*a));
   }
 }
 
 void FixName(TF1* fin, const char* pname, Double_t val){//Fix parameter by NAME
   fin->FixParameter(fin->GetParNumber(pname),val);
+  if(val==0){
+    fin->SetParameter(fin->GetParNumber(pname),-1);
+    fin->SetParLimits(fin->GetParNumber(pname),-1,-1);
+  }
 }
 
 void FTInitPars(vector<TF1*> & IndFits, int fskip){
@@ -712,5 +691,28 @@ void ParSave(vector<double> & p){//Save Fits parameters to a growing list for to
     vector<double> ptemp; ptemp.resize(Fits[i]->GetNpar());
     Fits[i]->GetParameters(&*ptemp.begin());
     p.insert(p.end(),ptemp.begin(),ptemp.end());
+  }
+}
+
+void FTCheck(TF1* & FT, TCanvas* CF){ //Half each parameter and redraw FT
+  string name = "START";
+  for(int i=0; i<FT->GetNpar(); i++){
+    CF->Clear(); CF->cd(); FT->SetTitle(name.c_str());
+    FT->Draw(); CF->SetLogy();
+    for(unsigned j=0; j<Fits.size(); j++){
+      Fits[j]->Draw("Same");
+    }
+    CF->SaveAs(((string)"Output/G_Final/"+name+(string)".pdf").c_str());
+    name = to_string(i);
+    FT->SetParameter(i,FT->GetParameter(i)*0.5);
+  }
+}
+
+void PrintParameters(TF1* & F){
+  cout << F->GetName() << endl;
+  for(int i=0;i<F->GetNpar();i++){
+    cout << "  (" << i << ") " << F->GetParName(i);
+    double a,b; F->GetParLimits(i,a,b); if(b<=F->GetParameter(i)||F->GetParameter(i)<=a){cout << " - [ " << a << " < " << F->GetParameter(i) << " < " << b << " ]" << endl;}
+    else{ cout << " - [ " << F->GetParameter(i) << " ]" << endl;}
   }
 }
